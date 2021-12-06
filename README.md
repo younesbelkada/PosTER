@@ -1,5 +1,5 @@
 # PosTER
-Implementation of PosTER - Pose Transformer Embedding Representation - for pedestrian attributes recognition 
+Implementation of PosTER - Pose Transformer Encoder Representation - for pedestrian attributes recognition 
 
 ## First steps
 
