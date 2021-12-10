@@ -1,0 +1,11 @@
+{
+    "Dataset":{
+        "DynamicDataset":{
+            "path_images":"./example_images",
+            "ext":".png"
+        },
+        "StaticDataset":{
+            "path_joints":"."
+        }
+    }
+}
