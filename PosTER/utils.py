@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 
 def prepare_pif_kps(kps_in):
@@ -63,3 +64,24 @@ def preprocess_pifpaf(annotations, im_size=None, enlarge_boxes=True, min_conf=0.
             keypoints.append(kps)
 
     return boxes, keypoints
+
+
+def convert_keypoints(keypoints_array, normalize=False, im_size=None, body_parts=False):
+    """
+        Convert the output from Pifpaf to an interpretable keypoints format
+    """
+    X, Y, C = np.array(keypoints_array[0]), np.array(keypoints_array[1]), np.array(keypoints_array[2])
+    if normalize:
+        assert im_size
+        X = X / max(im_size)
+        Y = Y / max(im_size)
+    output_processed_kps = []
+    i = 0
+    for i in range(len(X)):
+        output_processed_kps.append(X[i])
+        output_processed_kps.append(Y[i])
+        output_processed_kps.append(C[i])
+    if body_parts:
+        return torch.stack(torch.split(torch.tensor(output_processed_kps), 3), dim=0)
+    return torch.tensor(output_processed_kps)
+

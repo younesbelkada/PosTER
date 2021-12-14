@@ -8,6 +8,8 @@ from glob import glob
 from torch.utils.data import Dataset, DataLoader
 from PosTER.predictor import PifPafPredictor
 
+from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints
+
 class DynamicDataset(Dataset):
     """
         Class definition for the dynamic keypoints dataset.
@@ -16,8 +18,8 @@ class DynamicDataset(Dataset):
     """
     def __init__(self, config):
         self.config = config["Dataset"]["DynamicDataset"]
-        self.path_images = glob(os.path.join(self.config['path_images'], '**', '*'+self.config['ext']))
-        self.predictor = PifPafPredictor()
+        self.path_images = glob(os.path.join(self.config['path_images'], '**', '*'+self.config['ext']), recursive=True)
+        self.predictor_obj = PifPafPredictor()
     
     def __len__(self):
         """
@@ -33,7 +35,10 @@ class DynamicDataset(Dataset):
             idx = idx.tolist()
         
         image_name_to_predict = [self.path_images[idx]]
-        predicted_loader = self.predictor.images(image_name_to_predict)
+        predicted_loader = self.predictor_obj.predictor.images(image_name_to_predict)
+
+        predicted_kps = []
+
         for i, (pred_batch, _, meta_batch) in enumerate(tqdm(predicted_loader)):
             im_size = PIL.Image.open(open(meta_batch['file_name'], 'rb')).convert('RGB').size
             pifpaf_outs = {
@@ -42,6 +47,9 @@ class DynamicDataset(Dataset):
             im_name = os.path.basename(meta_batch['file_name'])
             boxes, keypoints = preprocess_pifpaf(pifpaf_outs['json_data'], im_size, enlarge_boxes=False)
 
-            print(keypoints)
-
+            if len(keypoints) > 0:
+                for j in range(len(boxes)):
+                    predicted_kps.append(convert_keypoints(keypoints[j], self.config['normalize'], im_size, self.config['body_parts']))
+            predicted_kps = torch.stack(predicted_kps, dim=0)
+        return predicted_kps
 

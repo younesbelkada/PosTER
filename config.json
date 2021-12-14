@@ -2,7 +2,9 @@
     "Dataset":{
         "DynamicDataset":{
             "path_images":"./example_images",
-            "ext":".png"
+            "ext":".png",
+            "normalize":true,
+            "body_parts":true
         },
         "StaticDataset":{
             "path_joints":"."
