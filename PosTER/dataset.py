@@ -2,6 +2,7 @@ import os
 import openpifpaf
 import torch
 import PIL
+import json
 
 from tqdm import tqdm
 from glob import glob
@@ -9,7 +10,7 @@ from glob import glob
 from torch.utils.data.dataloader import default_collate
 from torch.utils.data import Dataset, DataLoader
 from PosTER.predictor import PifPafPredictor
-from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints
+from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input
 
 def my_collate(batch):
     # TO DO: Filter out empty arrays
@@ -24,8 +25,8 @@ class DynamicDataset(Dataset):
         Expected output: unlabeled human keypoints
     """
     def __init__(self, config):
-        self.config = config["Dataset"]["DynamicDataset"]
-        self.path_images = glob(os.path.join(self.config['path_images'], '**', '*'+self.config['ext']), recursive=True)
+        self.config = config["Dataset"]
+        self.path_images = glob(os.path.join(self.config["DynamicDataset"]['path_images'], '**', '*'+self.config["DynamicDataset"]['ext']), recursive=True)
         self.predictor_obj = PifPafPredictor()
     
     def __len__(self):
@@ -58,5 +59,38 @@ class DynamicDataset(Dataset):
                 for j in range(len(boxes)):
                     predicted_kps.append(convert_keypoints(keypoints[j], self.config['normalize'], im_size, self.config['body_parts']))
             predicted_kps = torch.stack(predicted_kps, dim=0)
+        return predicted_kps
+
+class StaticDataset(Dataset):
+    """
+        Class definition for the static keypoints dataset.
+        Expected inputs: path to pre-computed keypoints
+        Expected output: unlabeled human keypoints
+    """
+    def __init__(self, config):
+        self.config = config["Dataset"]
+        self.path_kps = glob(os.path.join(self.config["StaticDataset"]['path_joints'], '**', '*'+self.config["StaticDataset"]['ext']), recursive=True)
+        self.im_size = (self.config["StaticDataset"]["im_width"], self.config["StaticDataset"]["im_height"])
+    def __len__(self):
+        """
+            Function to get the number of images using the given list of images
+        """
+        return len(self.path_kps)
+    
+    def __getitem__(self, idx):
+        """
+            Getter function in order to get the predicted keypoints from an example image.
+        """
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+        predicted_kps = []
+        json_file = json.load(open(self.path_kps[idx], 'r'))
+        if len(json_file) > 0:
+            for i in range(len(json_file)):
+                kps_array = json_file[i]['keypoints']
+                predicted_kps.append(convert_keypoints_json_input(kps_array, self.config['normalize'], self.im_size, self.config['body_parts']))
+            predicted_kps = torch.stack(predicted_kps, dim=0)
+        else:
+            predicted_kps = torch.tensor([])
         return predicted_kps
 
