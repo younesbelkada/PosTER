@@ -5,10 +5,17 @@ import PIL
 
 from tqdm import tqdm
 from glob import glob
+
+from torch.utils.data.dataloader import default_collate
 from torch.utils.data import Dataset, DataLoader
 from PosTER.predictor import PifPafPredictor
-
 from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints
+
+def my_collate(batch):
+    # TO DO: Filter out empty arrays
+    #batch = filter (lambda x:len(x) != 0, batch)
+    batch = torch.cat(batch, dim=0)
+    return batch
 
 class DynamicDataset(Dataset):
     """
