@@ -10,7 +10,14 @@
             "im_width":1920,
             "im_height":1080
         },
-        "normalize":true,
-        "body_parts":false
+        "Transforms":{
+            "normalize":true,
+            "body_parts":true,
+            "translation":{
+                "enable":true,
+                "p":0.9,
+                "distance":40
+            }
+        }
     }
 }

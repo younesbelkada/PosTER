@@ -65,11 +65,11 @@ def preprocess_pifpaf(annotations, im_size=None, enlarge_boxes=True, min_conf=0.
 
     return boxes, keypoints
 
-
+"""
 def convert_keypoints(keypoints_array, normalize=False, im_size=None, body_parts=False):
     """
-        Convert the output from Pifpaf to an interpretable keypoints format
-    """
+#Convert the output from Pifpaf to an interpretable keypoints format
+"""
     X, Y, C = np.array(keypoints_array[0]), np.array(keypoints_array[1]), np.array(keypoints_array[2])
     if normalize:
         assert im_size
@@ -81,24 +81,77 @@ def convert_keypoints(keypoints_array, normalize=False, im_size=None, body_parts
         output_processed_kps.append(X[i])
         output_processed_kps.append(Y[i])
         output_processed_kps.append(C[i])
+    output_processed_kps = torch.tensor(output_processed_kps)
+    output_processed_kps[torch.tensor(output_processed_kps) < 0] = 0
     if body_parts:
-        return torch.stack(torch.split(torch.tensor(output_processed_kps), 3), dim=0)
-    return torch.tensor(output_processed_kps)
+        return torch.stack(torch.split(output_processed_kps, 3), dim=0)
+    return output_processed_kps
+"""
 
+"""
 def convert_keypoints_json_input(keypoints_array, normalize=False, im_size=None, body_parts=False):
     """
-        Convert the output from Pifpaf to an interpretable keypoints format
-    """
+#Convert the output from Pifpaf to an interpretable keypoints format
+"""
     output_processed_kps = []
     n = 1
     if normalize:
         n = max(im_size)
 
     for i in range(len(keypoints_array)):
-        if (i+1)%3 == 0:
+        if (i+1)%3 == 0 or not normalize:
             output_processed_kps.append(keypoints_array[i])
         else:
             output_processed_kps.append(keypoints_array[i]/n)
     if body_parts:
         return torch.stack(torch.split(torch.tensor(output_processed_kps), 3), dim=0)
     return torch.tensor(output_processed_kps)
+"""
+
+def convert_keypoints(keypoints_array):
+    """
+        Convert the output from PifPaf to an interpretable keypoints format
+    """
+    X, Y, C = np.array(keypoints_array[0]), np.array(keypoints_array[1]), np.array(keypoints_array[2])
+    output_processed_kps = []
+    for i in range(len(X)):
+        output_processed_kps.append(X[i])
+        output_processed_kps.append(Y[i])
+        output_processed_kps.append(C[i])
+    output_processed_kps = torch.tensor(output_processed_kps)
+    output_processed_kps[output_processed_kps.clone().detach().requires_grad_(True) < 0] = 0
+    return output_processed_kps
+
+def convert_keypoints_batch(keypoints_array):
+    """
+        Convert the output from PifPaf to an interpretable keypoints format
+    """
+    X, Y, C = keypoints_array
+    output_processed_kps = []
+    for i in range(len(X)):
+        output_processed_kps.append(X[i, :].tolist())
+        output_processed_kps.append(Y[i, :].tolist())
+        output_processed_kps.append(C[i, :].tolist())
+    output_processed_kps = torch.tensor(output_processed_kps)
+    output_processed_kps[output_processed_kps.clone().detach().requires_grad_(True) < 0] = 0
+    return torch.transpose(output_processed_kps, 0, 1)
+
+def convert_keypoints_json_input(keypoints_array):
+    """
+        Convert the output from Pifpaf to an interpretable keypoints format
+    """
+    return torch.tensor(keypoints_array)
+
+def convert_xyc(keypoints_tensor):
+    """
+        Convert the kps tensor into X, Y, C format
+    """
+    X, Y, C = [], [], []
+    i = 0
+    print('hey ', keypoints_tensor.shape)
+    while i < len(keypoints_tensor[0, :]):
+        X.append(keypoints_tensor[:, i].detach().cpu().numpy())
+        Y.append(keypoints_tensor[:, i+1].detach().cpu().numpy())
+        C.append(keypoints_tensor[:, i+2].detach().cpu().numpy())
+        i += 3
+    return [X, Y, C]
