@@ -23,7 +23,7 @@ class PositionalEmbedding(nn.Module):
 
     def forward(self, x):
         x = x + self.pe[: x.size(0), :]
-        
+
         return x
 
 
@@ -48,7 +48,7 @@ class PosTEREmbedding(nn.Module):
 
     def forward(self, sequence):
         x = self.token_embed(sequence) 
-        x = self.position_embed(sequence) 
+        x = self.position_embed(x) 
         x = self.layernorm(x)
 
         return self.dropout(x)
