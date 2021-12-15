@@ -19,5 +19,15 @@
                 "distance":40
             }
         }
+    },
+    "Model":{
+        "PosTER":{
+            "dim_tokens": 3,
+            "dim_embed" : 100,  
+            "dim_ff" : 2048,
+            "nlayers" : 4,  
+            "nhead" : 5,  
+            "dropout" : 0.1 
+        }
     }
 }
