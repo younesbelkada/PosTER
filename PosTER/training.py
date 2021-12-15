@@ -89,7 +89,7 @@ if __name__ == "__main__":
     '''
     Training loop
     '''
-    best_loss = 0
+    best_loss = float('inf')
     for epoch in range(config.NUM_EPOCHS):
 
         #Train epoch and return losses
@@ -107,6 +107,6 @@ if __name__ == "__main__":
             })
         
         #Save best model
-        if (config.SAVE_CHECKPOINT and val_loss > best_loss):
+        if (config.SAVE_CHECKPOINT and val_loss < best_loss):
             best_loss = val_loss
             save_checkpoint(model, optimizer, filename= config.CHECKPOINT_FILENAME)
