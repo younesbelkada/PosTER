@@ -41,7 +41,7 @@ class PosTEREmbedding(nn.Module):
         :param dropout: dropout rate
         """
         super().__init__()
-        self.token_embed = nn.Embedding(dim_token, dim_embed)
+        self.token_embed = nn.Linear(dim_token, dim_embed)
         self.position_embed = PositionalEmbedding(dim_embed = dim_embed)
         self.dropout = nn.Dropout(p=dropout)
         self.layernorm = nn.LayerNorm(dim_embed)

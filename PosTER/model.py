@@ -31,17 +31,20 @@ class PosTER(nn.Module):
 if __name__ == "__main__":
 
     dim_tokens = 3 # the size of vocabulary
-    dim_embed = 100  # hidden dimension
-    dim_ff = 2048
-    nlayers = 4  # the number of nn.TransformerEncoderLayer in nn.TransformerEncoder
-    nhead = 2  # the number of heads in the multiheadattention models
-    dropout = 0.1  # the dropout value
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+dim_embed = 100  # hidden dimension
+dim_ff = 2048
+nlayers = 4  # the number of nn.TransformerEncoderLayer in nn.TransformerEncoder
+nhead = 5  # the number of heads in the multiheadattention models
+dropout = 0.1  # the dropout value
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-    model = PosTER(dim_tokens, dim_embed, dim_ff, nhead, nlayers, dropout=0.5).to(device)
-    dummy_input = torch.tensor([[0.3, 0.6, 0.2], [0.1,0.9, 0.8]], dtype= torch.long).to(device)
-    out = model.forward(dummy_input)
-    print(out.shape)
+model = PosTER(dim_tokens, dim_embed, dim_ff, nhead, nlayers, dropout=0.5).to(device)
+dummy_input = torch.tensor([[[0.3, 0.6, 0.2], [0.1, 0.9, 0.8]]], dtype= torch.float).to(device)
+out = model.forward(dummy_input)
+
+assert out.shape == dummy_input.shape
+print(f"input shape: {dummy_input.shape}")
+print(f"output shape: {out.shape}")
 
     
