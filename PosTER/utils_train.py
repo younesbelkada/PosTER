@@ -3,6 +3,8 @@ import numpy as np
 import torch.optim as optim
 import torch.nn as nn
 
+from PosTER.loss import point_loss
+
 def get_optimizer(model, config):
     """
         Get the optimizer according to the one specified on the config file
@@ -26,6 +28,8 @@ def get_criterion(config):
     criterion_type = config['Training']['criterion']
     if criterion_type.lower() == 'mse':
         criterion = nn.MSELoss()
+    elif criterion_type.lower() == 'pointloss':
+        criterion = point_loss()
     else:
         raise ValueError("Not implemented for the criterion type {}".format(criterion_type))
     return criterion
