@@ -13,7 +13,7 @@ from torchvision import transforms
 
 from PosTER.predictor import PifPafPredictor
 from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input
-from PosTER.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation
+from PosTER.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation, RandomMask
 
 def my_collate(batch):
     # TO DO: Filter out empty arrays

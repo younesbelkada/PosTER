@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import torch.optim as optim
 
 def prepare_pif_kps(kps_in):
     """Convert from a list of 51 to a list of 3, 17"""
@@ -105,7 +106,6 @@ def convert_xyc(keypoints_tensor):
     """
     X, Y, C = [], [], []
     i = 0
-    print('hey ', keypoints_tensor.shape)
     while i < len(keypoints_tensor[0, :]):
         X.append(keypoints_tensor[:, i].detach().cpu().numpy())
         Y.append(keypoints_tensor[:, i+1].detach().cpu().numpy())
@@ -113,17 +113,3 @@ def convert_xyc(keypoints_tensor):
         i += 3
     return [X, Y, C]
 
-def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
-    print("=> Saving checkpoint")
-    checkpoint = {
-        "state_dict": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
-    }
-    torch.save(checkpoint, filename)
-
-
-def load_checkpoint(checkpoint_file, model, optimizer, lr):
-    print("=> Loading checkpoint")
-    checkpoint = torch.load(checkpoint_file)
-    model.load_state_dict(checkpoint["state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer"])

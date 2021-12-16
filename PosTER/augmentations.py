@@ -60,3 +60,19 @@ class BodyParts(object):
     def __call__(self, keypoints):
         return torch.stack(torch.split(keypoints, 3, dim=1), dim=1)
 
+class RandomMask(object):
+    """
+    Randomly mask the N tokens from the input
+    :- N -: Number of body parts to mask (at most)
+    """
+    def __init__(self, N):
+        self.N = N 
+    def __call__(self, keypoints):
+
+        full_keypoints = keypoints.clone()
+        nb_body_parts = keypoints.shape[1]
+        nb_masks = torch.randint(0, self.N, (1,)).item()
+        masks = torch.randint(0, nb_body_parts, (keypoints.shape[0], nb_masks))
+        for b in range(keypoints.shape[0]):
+            keypoints[b, masks[b, :], :] = torch.zeros(keypoints.shape[-1])
+        return keypoints, full_keypoints
