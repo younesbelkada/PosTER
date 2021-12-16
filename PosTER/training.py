@@ -37,6 +37,8 @@ class Trainer(object):
     self.model.train()
     loop = tqdm(train_loader)
     avg_loss = 0
+    log_interval = self.config['Training']['log_interval']
+    intermediate_loss = 0
 
     training_samples_to_plot = []
     for batch_idx, input_batch in enumerate(loop):
@@ -57,6 +59,14 @@ class Trainer(object):
       self.optimizer.step()
 
       avg_loss += loss.item()
+      intermediate_loss += loss.item()
+      if batch_idx%log_interval == 0:
+        
+        if self.config['wandb']['enable']:
+          wandb.log({
+              "intermediate_loss": intermediate_loss/log_interval
+          })
+        intermediate_loss = 0
     avg_loss = avg_loss/len(train_loader)
     
 
@@ -128,26 +138,58 @@ class Trainer(object):
     """
 
     print("Generating some samples on the training set")
-    #plt.ioff()
-
+    plt.ioff()
     fig, axes = plt.subplots(nrows=2, ncols=self.config['Training']['n_samples_visualization'], figsize=(10,10))
+    fig.suptitle("Example predictions on the training set", fontsize=20)
     kps_painter = KeypointPainter()
     with torch.no_grad():
       for i, training_sample in enumerate(training_samples):
+        plt.axis('off')
         x, y, v = convert_xyc_numpy(training_sample[1].numpy())
         masked_x, masked_y, _ = convert_xyc_numpy(training_sample[0].numpy())
         axes[0, i].invert_yaxis()
+        axes[0, i].axis('off')
         kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
       
         predicted_keypoints = self.model(training_sample[-1].to(self.device).unsqueeze(0))
         predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
         axes[1, i].invert_yaxis()
+        axes[1, i].axis('off')
         kps_painter._draw_skeleton(axes[1, i], predicted_x, predicted_y, predicted_v, skeleton=COCO_PERSON_SKELETON, mask_joints=False)
     #plt.show()
     if self.config['wandb']['enable']:
-      #plot = wandb.Image(plt)
+      plot = wandb.Image(plt)
       wandb.log(
         {
-          "plot":fig
+          "training_plot":plot
         }
       )
+    
+    print("Generating some samples on the training set")
+    plt.ioff()
+    fig, axes = plt.subplots(nrows=2, ncols=self.config['Training']['n_samples_visualization'], figsize=(10,10))
+    fig.suptitle("Example predictions on the validation set", fontsize=20)
+    kps_painter = KeypointPainter()
+    with torch.no_grad():
+      for i, val_sample in enumerate(validation_samples):
+        plt.axis('off')
+        x, y, v = convert_xyc_numpy(val_sample[1].numpy())
+        masked_x, masked_y, _ = convert_xyc_numpy(val_sample[0].numpy())
+        axes[0, i].invert_yaxis()
+        axes[0, i].axis('off')
+        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
+      
+        predicted_keypoints = self.model(val_sample[-1].to(self.device).unsqueeze(0))
+        predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
+        axes[1, i].invert_yaxis()
+        axes[1, i].axis('off')
+        kps_painter._draw_skeleton(axes[1, i], predicted_x, predicted_y, predicted_v, skeleton=COCO_PERSON_SKELETON, mask_joints=False)
+    #plt.show()
+    if self.config['wandb']['enable']:
+      plot = wandb.Image(plt)
+      wandb.log(
+        {
+          "validation_plot":plot
+        }
+      )
+    plt.close()
