@@ -12,7 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 from PosTER.predictor import PifPafPredictor
-from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input
+from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input, get_input_path
 from PosTER.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation, RandomMask
 
 def my_collate(batch):
@@ -28,9 +28,13 @@ class DynamicDataset(Dataset):
         Expected inputs: path to images
         Expected output: unlabeled human keypoints
     """
-    def __init__(self, config):
+    def __init__(self, config, split=None):
         self.config = config["Dataset"]
-        self.path_images = glob(os.path.join(self.config["DynamicDataset"]['path_images'], '**', '*'+self.config["DynamicDataset"]['ext']), recursive=True)
+        #if split:
+        #    self.path_images = get_input_path(self.config["DynamicDataset"]['path_images'], self.config["DynamicDataset"]['ext'], split)
+        #else:
+        #    self.path_images = glob(os.path.join(self.config["DynamicDataset"]['path_images'], '**', '*'+self.config["DynamicDataset"]['ext']), recursive=True)
+        self.path_images = get_input_path(self.config["DynamicDataset"]['path_input'], self.config["DynamicDataset"]['ext'], split, self.config['split'][split])
         self.predictor_obj = PifPafPredictor()
         self.transforms_agent = TransformsAgent(config)
     
@@ -76,9 +80,13 @@ class StaticDataset(Dataset):
         Expected inputs: path to pre-computed keypoints
         Expected output: unlabeled human keypoints
     """
-    def __init__(self, config):
+    def __init__(self, config, split):
         self.config = config["Dataset"]
-        self.path_kps = glob(os.path.join(self.config["StaticDataset"]['path_joints'], '**', '*'+self.config["StaticDataset"]['ext']), recursive=True)
+        #if split:
+        #    self.path_images = get_input_path(self.config["DynamicDataset"]['path_images'], self.config["DynamicDataset"]['ext'], split)
+        #else:
+        #    self.path_images = glob(os.path.join(self.config["DynamicDataset"]['path_images'], '**', '*'+self.config["DynamicDataset"]['ext']), recursive=True)
+        self.path_kps = get_input_path(self.config["StaticDataset"]['path_input'], self.config["StaticDataset"]['ext'], split, self.config['split'][split])
         self.im_size = (self.config["StaticDataset"]["im_width"], self.config["StaticDataset"]["im_height"])
         self.transforms_agent = TransformsAgent(config)
 

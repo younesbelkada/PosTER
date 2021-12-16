@@ -3,13 +3,13 @@
         "DatasetType":"Static",
         "Task":"Pose-modeling"
     },
-    "Dataset":{    
+    "Dataset":{ 
         "DynamicDataset":{
-            "path_images":"./example_images",
+            "path_input":"./example_images",
             "ext":".png"
         },
         "StaticDataset":{
-            "path_joints":"./example_keypoints",
+            "path_input":"./output_pifpaf_pie",
             "ext":".json",
             "im_width":1920,
             "im_height":1080
@@ -18,13 +18,17 @@
             "normalize":true,
             "body_parts":true,
             "translation":{
-                "enable":true,
+                "enable":false,
                 "p":0.5,
-                "distance":100
+                "distance":50
             },
             "mask":{
                 "N":7
             }
+        },
+        "split":{
+            "train":["set01", "set02", "set03", "set04", "set05"],
+            "val":["set06"]
         }
     },
     "Model":{
@@ -49,6 +53,7 @@
         "batch_size":32,
         "epochs":1,
         "save_checkpoint":true,
-        "n_samples_visualization":5
+        "n_samples_visualization":5,
+        "log_interval":10
     }
 }

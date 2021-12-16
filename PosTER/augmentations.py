@@ -43,9 +43,10 @@ class RandomTranslation(object):
             X, Y, C = np.array(X), np.array(Y), np.array(C)
             max_x, max_y = np.max(X), np.max(Y)
             min_x, min_y = np.min(X), np.min(Y)
-            while (random_distance_x + max_x > self.max_width) or (random_distance_x + min_x < 0) or (random_distance_y + max_y > self.max_height) or (random_distance_y + min_y < 0) : 
+            while (random_distance_x + max_x > self.max_width) or (random_distance_x + min_x < 0) or (random_distance_y + max_y > self.max_height) or (random_distance_y + min_y < 0): 
                 random_distance_x = random.uniform(-self.distance, self.distance)
                 random_distance_y = random.uniform(-self.distance, self.distance)
+                print(random_distance_x, random_distance_y)
             normalized_X = (X+random_distance_x)
             normalized_Y = (Y+random_distance_y)
             keypoints = convert_keypoints_batch([normalized_X, normalized_Y, C])

@@ -1,5 +1,7 @@
+import os
 import torch
 import numpy as np
+from glob import glob
 import torch.optim as optim
 
 def prepare_pif_kps(kps_in):
@@ -126,3 +128,12 @@ def convert_xyc_numpy(keypoints_tensor):
         i += 3
     return [np.array(X), np.array(Y), np.array(C)]
 
+def get_input_path(path_input, ext, split=None, array_sets=None):
+    if split:
+        assert split in ['train', 'val']
+        paths = []
+        for sets in array_sets:
+            paths.extend(glob(os.path.join(path_input, sets, '**', '*'+ext), recursive=True))
+    else:
+        paths = glob(os.path.join(path_input, '**', '*'+ext), recursive=True)
+    return paths

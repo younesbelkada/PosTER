@@ -61,7 +61,6 @@ class Trainer(object):
       avg_loss += loss.item()
       intermediate_loss += loss.item()
       if batch_idx%log_interval == 0:
-        
         if self.config['wandb']['enable']:
           wandb.log({
               "intermediate_loss": intermediate_loss/log_interval
