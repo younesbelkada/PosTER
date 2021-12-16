@@ -8,7 +8,7 @@ with open('config.json', 'r') as f:
     config = json.load(f)
 
 train_data = StaticDataset(config, 'train')
-train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate)
+train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=True)
 
 val_data = StaticDataset(config, 'val')
 val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate)
