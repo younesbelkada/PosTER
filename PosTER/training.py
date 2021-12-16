@@ -1,6 +1,7 @@
 import wandb
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -8,7 +9,9 @@ from tqdm import tqdm
 from PosTER.dataset import DynamicDataset, StaticDataset
 from PosTER.model import PosTER 
 from PosTER.utils_train import save_checkpoint, load_checkpoint, get_optimizer, get_criterion
+from PosTER.utils import convert_xyc_numpy
 from PosTER.augmentations import RandomMask
+from PosTER.paint_keypoints import KeypointPainter, COCO_PERSON_SKELETON
 
 class Trainer(object):
   """
@@ -34,11 +37,15 @@ class Trainer(object):
     self.model.train()
     loop = tqdm(train_loader)
     avg_loss = 0
+
+    training_samples_to_plot = []
     for batch_idx, input_batch in enumerate(loop):
       if self.config['General']['Task'] == "Pose-modeling":
         masked_keypoints, full_keypoints = self.mask_transform(input_batch)
         masked_keypoints, full_keypoints = masked_keypoints.to(self.device), full_keypoints.to(self.device)
         full_keypoints = torch.flatten(full_keypoints, start_dim=1)
+        if len(training_samples_to_plot) < self.config['Training']['n_samples_visualization']:
+          training_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
       else:
         raise "task {} not implemented for train".format(self.config['General']['Task'])
             
@@ -55,6 +62,7 @@ class Trainer(object):
 
     # Evaluate model on the validation set
     avg_val_loss = 0
+    validation_samples_to_plot = []
     with torch.no_grad():
       self.model.eval()
       for batch_idx, input_batch in enumerate(tqdm(val_loader)):
@@ -62,8 +70,10 @@ class Trainer(object):
           masked_keypoints, full_keypoints = self.mask_transform(input_batch)
           masked_keypoints, full_keypoints = masked_keypoints.to(self.device), full_keypoints.to(self.device)
           full_keypoints = torch.flatten(full_keypoints, start_dim=1)
+          if len(validation_samples_to_plot) < self.config['Training']['n_samples_visualization']:
+            validation_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu()))
         else:
-          raise "task {} not implementedin val".format(self.config['General']['Task'])
+          raise "task {} not implemented in val".format(self.config['General']['Task'])
 
         predicted_keypoints = self.model(masked_keypoints)
         loss_val = self.criterion(predicted_keypoints, full_keypoints)
@@ -71,6 +81,8 @@ class Trainer(object):
         avg_val_loss += loss_val.item()
 
     avg_val_loss = avg_val_loss/len(val_loader)
+    if self.config['wandb']['enable']:
+      self.show_comparison(training_samples_to_plot, validation_samples_to_plot)
     return avg_loss, avg_val_loss
 
   def train(self, train_loader, val_loader):
@@ -107,4 +119,35 @@ class Trainer(object):
         #Save best model
         if (self.config['Training']['save_checkpoint'] and val_loss < best_loss):
             best_loss = val_loss
-            save_checkpoint(self.model, self.optimizer)    
+            save_checkpoint(self.model, self.optimizer)
+  def show_comparison(self, training_samples, validation_samples):
+    """
+      Runs an inference on some samples in the validation set and 
+      compares the result between the masked input and the predicted 
+      output. 
+    """
+
+    print("Generating some samples on the training set")
+    #plt.ioff()
+
+    fig, axes = plt.subplots(nrows=2, ncols=self.config['Training']['n_samples_visualization'], figsize=(10,10))
+    kps_painter = KeypointPainter()
+    with torch.no_grad():
+      for i, training_sample in enumerate(training_samples):
+        x, y, v = convert_xyc_numpy(training_sample[1].numpy())
+        masked_x, masked_y, _ = convert_xyc_numpy(training_sample[0].numpy())
+        axes[0, i].invert_yaxis()
+        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
+      
+        predicted_keypoints = self.model(training_sample[-1].to(self.device).unsqueeze(0))
+        predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
+        axes[1, i].invert_yaxis()
+        kps_painter._draw_skeleton(axes[1, i], predicted_x, predicted_y, predicted_v, skeleton=COCO_PERSON_SKELETON, mask_joints=False)
+    #plt.show()
+    if self.config['wandb']['enable']:
+      #plot = wandb.Image(plt)
+      wandb.log(
+        {
+          "plot":fig
+        }
+      )

@@ -113,3 +113,16 @@ def convert_xyc(keypoints_tensor):
         i += 3
     return [X, Y, C]
 
+def convert_xyc_numpy(keypoints_tensor):
+    """
+        Convert the kps tensor into X, Y, C format
+    """
+    X, Y, C = [], [], []
+    i = 0
+    while i < len(keypoints_tensor):
+        X.append(keypoints_tensor[i])
+        Y.append(keypoints_tensor[i+1])
+        C.append(keypoints_tensor[i+2])
+        i += 3
+    return [np.array(X), np.array(Y), np.array(C)]
+

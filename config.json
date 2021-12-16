@@ -19,8 +19,8 @@
             "body_parts":true,
             "translation":{
                 "enable":true,
-                "p":0.9,
-                "distance":40
+                "p":0.5,
+                "distance":100
             },
             "mask":{
                 "N":7
@@ -48,6 +48,7 @@
         "criterion":"MSE",
         "batch_size":32,
         "epochs":1,
-        "save_checkpoint":true
+        "save_checkpoint":true,
+        "n_samples_visualization":5
     }
 }

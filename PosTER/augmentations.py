@@ -62,17 +62,18 @@ class BodyParts(object):
 
 class RandomMask(object):
     """
-    Randomly mask the N tokens from the input
+    Randomly mask the N tokens from the input. The method is based on 
+    Bernoulli distribution to sample which body part to mask.
     :- N -: Number of body parts to mask (at most)
+    Credits to clement.apavou and arthur.zucker for their help
     """
     def __init__(self, N):
         self.N = N 
     def __call__(self, keypoints):
-
         full_keypoints = keypoints.clone()
         nb_body_parts = keypoints.shape[1]
         nb_masks = torch.randint(0, self.N, (1,)).item()
-        masks = torch.randint(0, nb_body_parts, (keypoints.shape[0], nb_masks))
-        for b in range(keypoints.shape[0]):
-            keypoints[b, masks[b, :], :] = torch.zeros(keypoints.shape[-1])
+
+        index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
+        keypoints = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
         return keypoints, full_keypoints
