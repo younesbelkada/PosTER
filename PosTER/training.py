@@ -80,7 +80,7 @@ class Trainer(object):
           masked_keypoints, full_keypoints = masked_keypoints.to(self.device), full_keypoints.to(self.device)
           full_keypoints = torch.flatten(full_keypoints, start_dim=1)
           if len(validation_samples_to_plot) < self.config['Training']['n_samples_visualization']:
-            validation_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu()))
+            validation_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
         else:
           raise "task {} not implemented in val".format(self.config['General']['Task'])
 
