@@ -2,6 +2,7 @@ import math
 import torch
 import torch.nn as nn
 
+from einops import repeat
 
 
 class PositionalEmbedding(nn.Module):
@@ -46,8 +47,14 @@ class PosTEREmbedding(nn.Module):
         self.dropout = nn.Dropout(p=dropout)
         self.layernorm = nn.LayerNorm(dim_embed)
 
+        self.cls_token = nn.Parameter(torch.randn(1, 1, dim_embed))
+
     def forward(self, sequence):
         x = self.token_embed(sequence) 
+        b, n, _ = x.shape
+
+        cls_tokens = repeat(self.cls_token, '() n d -> b n d', b = b)
+        x = torch.cat((cls_tokens, x), dim=1)
         x = self.position_embed(x) 
         x = self.layernorm(x)
 

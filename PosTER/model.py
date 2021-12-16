@@ -38,7 +38,7 @@ class RegressionHead(nn.Module):
     def __init__(self):
         super(RegressionHead, self).__init__()
         self.fc = nn.Linear(
-            51, 51
+            54, 51
         )
         self.sigmoid = nn.Sigmoid()
     def forward(self, x):
