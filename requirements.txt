@@ -1,2 +1,3 @@
 openpifpaf==0.13.0
 wandb
+einops

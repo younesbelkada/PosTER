@@ -7,6 +7,7 @@ from torch.utils.data import Dataset, DataLoader
 
 from PosTER.loss import point_loss
 from PosTER.dataset import DynamicDataset, StaticDataset, my_collate
+from PosTER.TITAN.titan_dataset import TITANDataset, TITANSimpleDataset
 
 def get_optimizer(model, config):
     """
@@ -75,4 +76,15 @@ def get_dataset(config):
 
         val_data = DynamicDataset(config, 'val')
         val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate)
+    elif dataset_type.lower() == 'titan':
+        train_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='train', dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
+        train_simple_dataset = TITANSimpleDataset(train_data, merge_cls=False)
+        train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
+        #train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], shuffle=True)
+
+        val_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='val',  dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
+        val_simple_dataset = TITANSimpleDataset(val_data, merge_cls=False)
+        val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
+        #val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'])
+
     return train_dataloader, val_dataloader

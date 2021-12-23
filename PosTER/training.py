@@ -49,7 +49,8 @@ class Trainer(object):
         if len(training_samples_to_plot) < self.config['Training']['n_samples_visualization']:
           training_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
       else:
-        raise "task {} not implemented for train".format(self.config['General']['Task'])
+        print(input_batch[0].shape, input_batch[1])
+        raise BaseException("task {} not implemented for train".format(self.config['General']['Task']))
             
       predicted_keypoints = self.model(masked_keypoints)
       loss = self.criterion(predicted_keypoints, full_keypoints)
