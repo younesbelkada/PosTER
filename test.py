@@ -1,17 +1,12 @@
 import json
-from torch.utils.data import Dataset, DataLoader
 
 from PosTER.training import Trainer
-from PosTER.dataset import DynamicDataset, StaticDataset, my_collate
+from PosTER.utils_train import get_dataset
 
 with open('config.json', 'r') as f:
     config = json.load(f)
 
-train_data = StaticDataset(config, 'train')
-train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=True)
-
-val_data = StaticDataset(config, 'val')
-val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate)
+train_dataloader, val_dataloader = get_dataset(config)
 
 trainer = Trainer(config)
 trainer.train(train_dataloader, val_dataloader)

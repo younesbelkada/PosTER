@@ -148,7 +148,9 @@ class KeypointPainter(Configurable):
 
         # show masked joints
         if mask_joints:
-            ax.scatter(
-                x[masked_x == 0.0], y[masked_y == 0.0], s=(self.marker_size*20)**2, marker='.',
-                color='black', alpha=1
-            )
+            for i in np.arange(.1,1.01,.1):
+                ax.scatter(x[masked_x == 0.0], y[masked_y == 0.0], s=(50*i*(1*.9+.1))**2, marker='.', color=(0,0,0,.5/i/10), zorder=3)
+            #ax.scatter(
+            #    x[masked_x == 0.0], y[masked_y == 0.0], s=(self.marker_size*22)**2, marker='.',
+            #    color='black', alpha=1, zorder=3
+            #)

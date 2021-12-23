@@ -86,9 +86,8 @@ class Trainer(object):
 
         predicted_keypoints = self.model(masked_keypoints)
         loss_val = self.criterion(predicted_keypoints, full_keypoints)
-          
         avg_val_loss += loss_val.item()
-
+        
     avg_val_loss = avg_val_loss/len(val_loader)
     if self.config['wandb']['enable']:
       self.show_comparison(training_samples_to_plot, validation_samples_to_plot)
