@@ -94,8 +94,11 @@ class Trainer(object):
             validation_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
           cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
           cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
-          loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
-          avg_val_loss += loss_val.item()        
+          dist_loss_val, bt_loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+          val_loss = dist_loss_val
+          if bt_loss_val:
+            val_loss = (dist_loss_val + bt_loss_val)/2
+          avg_val_loss += val_loss.item()        
         else:
           raise "task {} not implemented in val".format(self.config['General']['Task'])
         
