@@ -52,15 +52,16 @@ class Trainer(object):
         
         cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
         cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
-
+        
         dist_loss, bt_loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+        loss = dist_loss
         if bt_loss:
-          dist_loss = (dist_loss + bt_loss)/2
+          loss = (dist_loss + bt_loss)/2
       else:
         raise BaseException("task {} not implemented for train".format(self.config['General']['Task']))
             
       self.optimizer.zero_grad()
-      dist_loss.backward()
+      loss.backward()
       self.optimizer.step()
 
       avg_loss += dist_loss.item()
@@ -93,8 +94,11 @@ class Trainer(object):
             validation_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
           cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
           cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
-          loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
-          avg_val_loss += loss_val.item()        
+          dist_loss_val, bt_loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+          val_loss = dist_loss_val
+          if bt_loss_val:
+            val_loss = (dist_loss_val + bt_loss_val)/2
+          avg_val_loss += val_loss.item()        
         else:
           raise "task {} not implemented in val".format(self.config['General']['Task'])
         
@@ -159,7 +163,7 @@ class Trainer(object):
         axes[0, i].axis('off')
         kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
       
-        predicted_keypoints = self.model(training_sample[-1].to(self.device).unsqueeze(0))
+        _ , predicted_keypoints = self.model(training_sample[-1].to(self.device).unsqueeze(0))
         predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
         axes[1, i].invert_yaxis()
         axes[1, i].axis('off')
@@ -187,7 +191,7 @@ class Trainer(object):
         axes[0, i].axis('off')
         kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
       
-        predicted_keypoints = self.model(val_sample[-1].to(self.device).unsqueeze(0))
+        _, predicted_keypoints = self.model(val_sample[-1].to(self.device).unsqueeze(0))
         predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
         axes[1, i].invert_yaxis()
         axes[1, i].axis('off')
