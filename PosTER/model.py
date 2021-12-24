@@ -31,16 +31,19 @@ class PosTER(nn.Module):
     def forward(self, src):
         embed = self.poster_embedding(src)
         output_embed = self.transformer_encoder(embed)
-        output_token = self.token_prediction_layer(output_embed)
-        return self.regressionhead(output_token)
+        cls_token = output_embed[:,0,:]
+        output_token = self.token_prediction_layer(output_embed[:, 1:, :])
+        x  = self.regressionhead(output_token)
+
+        return  cls_token, torch.flatten(x, start_dim=1)
+
 
 class RegressionHead(nn.Module):
     def __init__(self):
         super(RegressionHead, self).__init__()
         self.fc = nn.Linear(
-            54, 51
+            3, 3
         )
         self.sigmoid = nn.Sigmoid()
     def forward(self, x):
-        x = torch.flatten(x, start_dim=1)
         return self.sigmoid(self.fc(x))
