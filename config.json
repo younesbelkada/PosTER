@@ -14,6 +14,10 @@
             "im_width":1920,
             "im_height":1080
         },
+        "TITAN":{
+            "dataset_dir":".",
+            "pickle_dir":"pkl_files"
+        },
         "Transforms":{
             "normalize":true,
             "body_parts":true,
@@ -51,7 +55,7 @@
         "learning_rate":0.001,
         "criterion":{
             "type":"mse",
-            "enable_bt":true,
+            "enable_bt":false,
             "lmbda":5e-3
         },
         "batch_size":32,
