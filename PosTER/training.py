@@ -52,15 +52,16 @@ class Trainer(object):
         
         cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
         cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
-
+        
         dist_loss, bt_loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+        loss = dist_loss
         if bt_loss:
-          dist_loss = (dist_loss + bt_loss)/2
+          loss = (dist_loss + bt_loss)/2
       else:
         raise BaseException("task {} not implemented for train".format(self.config['General']['Task']))
             
       self.optimizer.zero_grad()
-      dist_loss.backward()
+      loss.backward()
       self.optimizer.step()
 
       avg_loss += dist_loss.item()
