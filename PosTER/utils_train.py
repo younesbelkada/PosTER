@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from torch.utils.data import Dataset, DataLoader
 
-from PosTER.loss import point_loss
+from PosTER.loss import point_loss, pose_bt_loss
 from PosTER.dataset import DynamicDataset, StaticDataset, my_collate
 from PosTER.TITAN.titan_dataset import TITANDataset, TITANSimpleDataset
 
@@ -29,9 +29,9 @@ def get_criterion(config):
         Get the criterion according to the one specified on the config file
         :- config -: json config file
     """
-    criterion_type = config['Training']['criterion']
+    criterion_type = config['Training']['criterion']['type']
     if criterion_type.lower() == 'mse':
-        criterion = nn.MSELoss()
+        criterion = pose_bt_loss
     elif criterion_type.lower() == 'pointloss':
         criterion = point_loss
     elif criterion_type.lower() == 'mae':

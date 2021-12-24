@@ -10,7 +10,7 @@ from PosTER.dataset import DynamicDataset, StaticDataset
 from PosTER.model import PosTER 
 from PosTER.utils_train import save_checkpoint, load_checkpoint, get_optimizer, get_criterion
 from PosTER.utils import convert_xyc_numpy
-from PosTER.augmentations import RandomMask
+from PosTER.augmentations import RandomMask, BodyParts
 from PosTER.paint_keypoints import KeypointPainter, COCO_PERSON_SKELETON
 
 class Trainer(object):
@@ -48,12 +48,15 @@ class Trainer(object):
         full_keypoints = torch.flatten(full_keypoints, start_dim=1)
         if len(training_samples_to_plot) < self.config['Training']['n_samples_visualization']:
           training_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
+        
+        cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
+        cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
+
+        loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
       else:
-        print(input_batch[0].shape, input_batch[1])
         raise BaseException("task {} not implemented for train".format(self.config['General']['Task']))
             
-      predicted_keypoints = self.model(masked_keypoints)
-      loss = self.criterion(predicted_keypoints, full_keypoints)
+      
 
       self.optimizer.zero_grad()
       loss.backward()
@@ -82,12 +85,13 @@ class Trainer(object):
           full_keypoints = torch.flatten(full_keypoints, start_dim=1)
           if len(validation_samples_to_plot) < self.config['Training']['n_samples_visualization']:
             validation_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
+          cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
+          cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
+          loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+          avg_val_loss += loss_val.item()        
         else:
           raise "task {} not implemented in val".format(self.config['General']['Task'])
 
-        predicted_keypoints = self.model(masked_keypoints)
-        loss_val = self.criterion(predicted_keypoints, full_keypoints)
-        avg_val_loss += loss_val.item()
         
     avg_val_loss = avg_val_loss/len(val_loader)
     if self.config['wandb']['enable']:

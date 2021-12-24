@@ -34,7 +34,6 @@ class PosTER(nn.Module):
         cls_token = output_embed[:,0,:]
         output_token = self.token_prediction_layer(output_embed[:, 1:, :])
         x  = self.regressionhead(output_token)
-
         return  cls_token, torch.flatten(x, start_dim=1)
 
 

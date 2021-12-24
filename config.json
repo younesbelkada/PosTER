@@ -49,7 +49,11 @@
     "Training":{
         "optimizer":"adam",
         "learning_rate":0.001,
-        "criterion":"mae",
+        "criterion":{
+            "type":"mse",
+            "enable_bt":true,
+            "lmbda":5e-3
+        },
         "batch_size":32,
         "epochs":1,
         "save_checkpoint":true,
