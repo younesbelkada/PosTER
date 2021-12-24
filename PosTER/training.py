@@ -159,7 +159,7 @@ class Trainer(object):
         axes[0, i].axis('off')
         kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
       
-        predicted_keypoints = self.model(training_sample[-1].to(self.device).unsqueeze(0))
+        _ , predicted_keypoints = self.model(training_sample[-1].to(self.device).unsqueeze(0))
         predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
         axes[1, i].invert_yaxis()
         axes[1, i].axis('off')
@@ -187,7 +187,7 @@ class Trainer(object):
         axes[0, i].axis('off')
         kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
       
-        predicted_keypoints = self.model(val_sample[-1].to(self.device).unsqueeze(0))
+        _, predicted_keypoints = self.model(val_sample[-1].to(self.device).unsqueeze(0))
         predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
         axes[1, i].invert_yaxis()
         axes[1, i].axis('off')
