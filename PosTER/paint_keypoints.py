@@ -121,7 +121,7 @@ class KeypointPainter(Configurable):
             alpha=alpha,
         ))
 
-            # joints
+        # joints
         ax.scatter(
             x[v > 0.0], y[v > 0.0], s=self.marker_size**2, marker='.',
             color=color if self.monocolor_connections else 'white',
@@ -132,7 +132,7 @@ class KeypointPainter(Configurable):
 
         
 
-            # highlight joints
+        # highlight joints
         if self.highlight is not None:
             highlight_v = np.zeros_like(v)
             highlight_v[self.highlight] = 1
