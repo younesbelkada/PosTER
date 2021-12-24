@@ -39,5 +39,5 @@ def bt_loss(z1, z2, lmbda=5e-3):
 def pose_bt_loss(masked_kps, full_kps, z1, z2, lmbda=5e-3, enable_bt=True):
     loss = nn.MSELoss()(masked_kps, full_kps)
     if enable_bt:
-        loss = (loss + bt_loss(z1, z2, lmbda))/2
-    return loss 
+        return loss, bt_loss(z1, z2, lmbda)
+    return loss, None

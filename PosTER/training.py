@@ -38,7 +38,8 @@ class Trainer(object):
     loop = tqdm(train_loader)
     avg_loss = 0
     log_interval = self.config['Training']['log_interval']
-    intermediate_loss = 0
+    intermediate_dist_loss = 0
+    intermediate_bt_loss = 0
 
     training_samples_to_plot = []
     for batch_idx, input_batch in enumerate(loop):
@@ -52,24 +53,29 @@ class Trainer(object):
         cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
         cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
 
-        loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+        dist_loss, bt_loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+        if bt_loss:
+          dist_loss = (dist_loss + bt_loss)/2
       else:
         raise BaseException("task {} not implemented for train".format(self.config['General']['Task']))
             
-      
-
       self.optimizer.zero_grad()
-      loss.backward()
+      dist_loss.backward()
       self.optimizer.step()
 
-      avg_loss += loss.item()
-      intermediate_loss += loss.item()
+      avg_loss += dist_loss.item()
+      intermediate_dist_loss += dist_loss.item()
+      if bt_loss:
+        intermediate_bt_loss += bt_loss.item()
+      
       if batch_idx%log_interval == 0:
         if self.config['wandb']['enable']:
           wandb.log({
-              "intermediate_loss": intermediate_loss/log_interval
+              "intermediate_loss": intermediate_dist_loss/log_interval,
+              "intermediate_bt_loss": intermediate_bt_loss/log_interval
           })
-        intermediate_loss = 0
+        intermediate_dist_loss = 0
+        intermediate_bt_loss = 0
     avg_loss = avg_loss/len(train_loader)
     
 
@@ -91,7 +97,6 @@ class Trainer(object):
           avg_val_loss += loss_val.item()        
         else:
           raise "task {} not implemented in val".format(self.config['General']['Task'])
-
         
     avg_val_loss = avg_val_loss/len(val_loader)
     if self.config['wandb']['enable']:
