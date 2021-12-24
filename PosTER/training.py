@@ -64,7 +64,7 @@ class Trainer(object):
       loss.backward()
       self.optimizer.step()
 
-      avg_loss += dist_loss.item()
+      avg_loss += loss.item()
       intermediate_dist_loss += dist_loss.item()
       if bt_loss:
         intermediate_bt_loss += bt_loss.item()
