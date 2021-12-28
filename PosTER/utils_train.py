@@ -8,6 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from PosTER.loss import point_loss, pose_bt_loss
 from PosTER.dataset import DynamicDataset, StaticDataset, my_collate
 from PosTER.TITAN.titan_dataset import TITANDataset, TITANSimpleDataset
+from PosTER.TCG.tcg_dataset import TCGDataset, TCGSingleFrameDataset, tcg_collate_fn, tcg_pad_seqs
 
 def get_optimizer(model, config):
     """
@@ -86,5 +87,15 @@ def get_dataset(config):
         val_simple_dataset = TITANSimpleDataset(val_data, merge_cls=False)
         val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
         #val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'])
+    elif dataset_type.lower() == 'tcg':
+        datapath, label_type = config['Dataset']['TCG']['dataset_dir'], config['Dataset']['TCG']['label_type']
+        train_data = TCGDataset(datapath, label_type, eval_type="xs", eval_id=1, training=True)
+        train_simple_dataset = TCGSingleFrameDataset(train_data)
+        train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
+        
+        val_data = TCGDataset(datapath, label_type, eval_type="xs", eval_id=1, training=False)
+        val_simple_dataset = TCGSingleFrameDataset(train_data)
+        val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
+        
 
     return train_dataloader, val_dataloader

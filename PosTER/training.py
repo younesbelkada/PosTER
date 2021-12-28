@@ -57,6 +57,11 @@ class Trainer(object):
         loss = dist_loss
         if bt_loss:
           loss = (dist_loss + bt_loss)/2
+      elif self.config['General']['Task'] == "Attribute-classification":
+        print(input_batch[0].shape)
+        print(input_batch[1].shape)
+        print(input_batch)
+        exit(0)
       else:
         raise BaseException("task {} not implemented for train".format(self.config['General']['Task']))
             

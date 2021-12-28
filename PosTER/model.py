@@ -37,6 +37,19 @@ class PosTER(nn.Module):
         return  cls_token, torch.flatten(x, start_dim=1)
 
 
+class PosTER_FT(nn.Module):
+    def __init__(self, pretrained_poster, prediction_heads):
+        """
+            PosTER architecture for fine-tuning
+            :- pretrained_poster -: PosTER model
+            :- prediction_heads -: nn.ModuleList -> list of prediction heads
+        """
+        super(PosTER_FT, self).__init__()
+        self.pretrained_poster = pretrained_poster
+
+    def forward(self, x):
+        cls_token, _ = self.pretrained_poster(x)
+
 class RegressionHead(nn.Module):
     def __init__(self):
         super(RegressionHead, self).__init__()
