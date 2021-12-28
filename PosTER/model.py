@@ -34,7 +34,7 @@ class PosTER(nn.Module):
         cls_token = output_embed[:,0,:]
         output_token = self.token_prediction_layer(output_embed[:, 1:, :])
         x  = self.regressionhead(output_token)
-        return  cls_token, torch.flatten(x, start_dim=1)
+        return  cls_token, x
 
 
 class PosTER_FT(nn.Module):
@@ -54,8 +54,9 @@ class RegressionHead(nn.Module):
     def __init__(self):
         super(RegressionHead, self).__init__()
         self.fc = nn.Linear(
-            3, 3
+            51, 51
         )
         self.sigmoid = nn.Sigmoid()
     def forward(self, x):
+        x = torch.flatten(x, start_dim=1)
         return self.sigmoid(self.fc(x))
