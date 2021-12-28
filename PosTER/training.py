@@ -261,11 +261,12 @@ class Trainer_FT(object):
       predictions = self.model(keypoints)
       loss = 0
       for i, pred_tensors in enumerate(predictions):
-        loss = self.criterion(pred_tensors, attributes[:, i].long())
-        loss.backward(retain_graph=True)
-
-      self.optimizer.step()
+        loss += self.criterion(pred_tensors, attributes[:, i].long())
+        
       self.optimizer.zero_grad()
+      loss.backward()
+      self.optimizer.step()
+      
       
       avg_loss += loss.item()
       intermediate_loss += loss.item()
