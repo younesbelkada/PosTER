@@ -1,7 +1,7 @@
 {
     "General":{
-        "DatasetType":"Static",
-        "Task":"Pose-modeling"
+        "DatasetType":"TITAN",
+        "Task":"Attribute-classification"
     },
     "Dataset":{ 
         "DynamicDataset":{
@@ -17,6 +17,10 @@
         "TITAN":{
             "dataset_dir":".",
             "pickle_dir":"pkl_files"
+        },
+        "TCG":{
+            "dataset_dir":"../tcg_dataset",
+            "label_type":"major"
         },
         "Transforms":{
             "normalize":true,
@@ -54,11 +58,11 @@
         "optimizer":"adam",
         "learning_rate":0.001,
         "criterion":{
-            "type":"mse",
+            "type":"crossentropy",
             "enable_bt":false,
             "lmbda":5e-3
         },
-        "batch_size":32,
+        "batch_size":2,
         "epochs":1,
         "save_checkpoint":true,
         "n_samples_visualization":5,
