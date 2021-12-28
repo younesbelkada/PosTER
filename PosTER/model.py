@@ -34,7 +34,10 @@ class PosTER(nn.Module):
         cls_token = output_embed[:,0,:]
         output_token = self.token_prediction_layer(output_embed[:, 1:, :])
         x  = self.regressionhead(output_token)
-        return  cls_token, x
+        return  cls_token, torch.flatten(x, start_dim=1)
+    
+    def load(self, device):
+        self.load_state_dict(torch.load())
 
 
 class PosTER_FT(nn.Module):
@@ -46,9 +49,23 @@ class PosTER_FT(nn.Module):
         """
         super(PosTER_FT, self).__init__()
         self.pretrained_poster = pretrained_poster
+        self.fc = nn.Sequential(
+            nn.Linear(pretrained_poster.token_prediction_layer.in_features, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+            nn.Linear(1024, 1024),
+            nn.BatchNorm1d(1024),
+            nn.ReLU(),
+        )
+        self.prediction_heads = prediction_heads
 
     def forward(self, x):
         cls_token, _ = self.pretrained_poster(x)
+        cls_token = self.fc(cls_token)
+        return self.prediction_heads(cls_token)
 
 class RegressionHead(nn.Module):
     def __init__(self):
@@ -60,3 +77,21 @@ class RegressionHead(nn.Module):
     def forward(self, x):
         x = torch.flatten(x, start_dim=1)
         return self.sigmoid(self.fc(x))
+
+class PredictionHeads(nn.Module):
+    def __init__(self, list_attributes):
+        """
+            Prediction Heads for PosTER fine tuning
+            :- list_attributes -: list containing number of attributes per category
+        """
+        super(PredictionHeads, self).__init__()
+        self.nb_heads = len(list_attributes)
+        assert self.nb_heads > 0
+        
+        self.list_modules = []
+        for e in list_attributes:
+            self.list_modules.append(nn.Linear(1024, e))
+        self.list_modules = nn.ModuleList(self.list_modules)
+    
+    def forward(self, x):
+        return [head(x) for head in self.list_modules]

@@ -7,16 +7,30 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from PosTER.dataset import DynamicDataset, StaticDataset
-from PosTER.model import PosTER 
+from PosTER.model import PosTER, PosTER_FT, PredictionHeads
 from PosTER.utils_train import save_checkpoint, load_checkpoint, get_optimizer, get_criterion
 from PosTER.utils import convert_xyc_numpy
 from PosTER.augmentations import RandomMask, BodyParts
 from PosTER.paint_keypoints import KeypointPainter, COCO_PERSON_SKELETON
 
+class Trainer_Agent(object):
+  """
+    Trainer object to monitor training and validation
+    :- config -: json config file
+  """
+  def __init__(self, config):
+    self.config = config
+    if self.config['General']['Task'].lower() == 'pose-modeling':
+      self.trainer = Trainer(config)
+    elif self.config['General']['Task'].lower() == 'attribute-classification':
+      self.trainer = Trainer_FT(config)
+    else:
+      raise "Not implemented!"
+
 class Trainer(object):
   """
     Trainer object to monitor training and validation
-    :- model -: model to use for training 
+    :- config -: json config file
   """
   def __init__(self, config):
     self.config = config
@@ -57,11 +71,6 @@ class Trainer(object):
         loss = dist_loss
         if bt_loss:
           loss = (dist_loss + bt_loss)/2
-      elif self.config['General']['Task'] == "Attribute-classification":
-        print(input_batch[0].shape)
-        print(input_batch[1].shape)
-        print(input_batch)
-        exit(0)
       else:
         raise BaseException("task {} not implemented for train".format(self.config['General']['Task']))
             
@@ -146,7 +155,7 @@ class Trainer(object):
         #Save best model
         if (self.config['Training']['save_checkpoint'] and val_loss < best_loss):
             best_loss = val_loss
-            save_checkpoint(self.model, self.optimizer)
+            save_checkpoint(self.model)
   def show_comparison(self, training_samples, validation_samples):
     """
       Runs an inference on some samples in the validation set and 
@@ -210,3 +219,117 @@ class Trainer(object):
         }
       )
     plt.close()
+
+
+class Trainer_FT(object):
+  """
+    Trainer object to monitor training and validation
+    :- config -: json config file
+  """
+  def __init__(self, config):
+    self.config = config
+    if config['General']['DatasetType'] == 'TITAN':
+      attributes = [4, 7, 9, 13, 4]
+    else:
+      raise "Not implemented"
+    self.heads = PredictionHeads(attributes)
+    self.poster_model = PosTER(config)
+    checkpoint_file = "my_checkpoint.pth.tar"
+    #load_checkpoint(checkpoint_file, self.poster_model)
+    self.model = PosTER_FT(self.poster_model , self.heads)
+    self.optimizer = get_optimizer(self.model, config)
+    self.criterion = get_criterion(config)
+    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #self.device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
+  def train_one_epoch(self, train_loader, val_loader):
+    """
+      Train the model according to the args specified on the config file and 
+      given the train and validation dataloader for only one epoch
+      :- train_loader -: training dataloader
+      :- val_loader -: validation dataloader
+    """
+    self.model.train()
+    loop = tqdm(train_loader)
+    avg_loss = 0
+    log_interval = self.config['Training']['log_interval']
+    intermediate_loss = 0
+
+    for batch_idx, input_batch in enumerate(loop):
+      keypoints, attributes = input_batch 
+      keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
+      
+      predictions = self.model(keypoints)
+      loss = 0
+      for i, pred_tensors in enumerate(predictions):
+        loss = self.criterion(pred_tensors, attributes[:, i].long())
+        loss.backward(retain_graph=True)
+
+      self.optimizer.step()
+      self.optimizer.zero_grad()
+      
+      avg_loss += loss.item()
+      intermediate_loss += loss.item()
+      print(avg_loss)
+      if batch_idx%log_interval == 0:
+        if self.config['wandb']['enable']:
+          wandb.log({
+              "intermediate_loss": intermediate_loss/log_interval
+          })
+        intermediate_loss = 0
+    avg_loss = avg_loss/len(train_loader)
+    
+
+    # Evaluate model on the validation set
+    avg_val_loss = 0
+    validation_samples_to_plot = []
+    with torch.no_grad():
+      self.model.eval()
+      for batch_idx, input_batch in enumerate(tqdm(val_loader)):
+        keypoints, attributes = input_batch
+        keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
+        
+        predictions = self.model(keypoints)
+        loss = 0
+        for i, pred_tensors in enumerate(predictions):
+          loss += self.criterion(pred_tensors, attributes[:, i])
+        avg_val_loss += loss.item()
+    avg_val_loss = avg_val_loss/len(val_loader)
+    #if self.config['wandb']['enable']:
+    #  self.show_comparison(training_samples_to_plot, validation_samples_to_plot)
+    return avg_loss, avg_val_loss
+
+  def train(self, train_loader, val_loader):
+    """
+      Train the model according to the args specified on the config file and 
+      given the train and validation dataloader
+      :- train_loader -: training dataloader
+      :- val_loader -: validation dataloader
+    """
+
+    if self.config['wandb']['enable']:
+      wandb_entity = self.config['wandb']['entity']
+      wandb.init(project=self.config['wandb']['project_name'], entity=wandb_entity)
+      wandb.watch(self.model, self.criterion, log="all", log_freq=10)
+
+    best_loss = float('inf')
+    self.model = self.model.to(self.device)
+    for epoch in range(self.config['Training']['epochs']):
+        #Train epoch and return losses
+        loss, val_loss = self.train_one_epoch(train_loader, val_loader)
+
+        #Display results
+        print(f"Loss epoch {epoch}: ", loss)
+        print(f"Validation Loss epoch {epoch}: ", val_loss)
+
+        #Log results in wandb
+        if self.config['wandb']['enable']:
+          wandb.log({
+              "loss": loss, 
+              "epoch": epoch,
+              "val_loss": val_loss
+          })
+        
+        #Save best model
+        if (self.config['Training']['save_checkpoint'] and val_loss < best_loss):
+            best_loss = val_loss
+            save_checkpoint(self.model)

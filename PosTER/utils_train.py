@@ -2,6 +2,7 @@ import torch
 import numpy as np
 import torch.optim as optim
 import torch.nn as nn
+import torch.nn.functional as F
 
 from torch.utils.data import Dataset, DataLoader
 
@@ -38,25 +39,25 @@ def get_criterion(config):
     elif criterion_type.lower() == 'mae':
         criterion = nn.L1Loss()
     elif criterion_type.lower() == 'crossentropy':
-        criterion = nn.CrossEntropyLoss()
+        #criterion = nn.CrossEntropyLoss()
+        criterion = F.cross_entropy
     else:
         raise ValueError("Not implemented for the criterion type {}".format(criterion_type))
     return criterion
 
-def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
+def save_checkpoint(model, filename="my_checkpoint.pth.tar"):
     print("=> Saving checkpoint")
     checkpoint = {
-        "state_dict": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
+        "state_dict": model.state_dict()
     }
     torch.save(checkpoint, filename)
 
 
-def load_checkpoint(checkpoint_file, model, optimizer, lr):
+def load_checkpoint(checkpoint_file, model):
     print("=> Loading checkpoint")
     checkpoint = torch.load(checkpoint_file)
     model.load_state_dict(checkpoint["state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer"])
+
 
 def get_dataset(config):
     """

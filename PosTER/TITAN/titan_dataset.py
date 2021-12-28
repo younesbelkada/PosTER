@@ -75,6 +75,7 @@ class Person(object):
         self.object_track_id = int(gt_anno['obj_track_id'])
         x_y_conf = np.array(pred['keypoints']).reshape(-1, 3)
         self.key_points = x_y_conf[:, :2] # x, y
+        #self.key_points = x_y_conf # x, y
         self.kp_confidence = x_y_conf[:, 2]
         self.gt_box = [gt_anno[key] for key in ["left", "top", "width", "height"]]
         self.pred_box = pred['bbox']
@@ -392,10 +393,9 @@ class TITANSimpleDataset(Dataset):
             all_frames.extend(seq.frames)
         return all_frames
     
-    def get_poses_from_frames(self, frames:List[Frame]):
+    def get_poses_from_frames(self, frames:List[Frame], get_confidence=True):
         all_poses, all_labels, all_wh = [], [], []
         # communicative, complex_context, atomic, simple_context, transporting
-        
         for frame in frames:
             for person in frame.persons:
                 if self.merge_cls:
@@ -405,6 +405,9 @@ class TITANSimpleDataset(Dataset):
                 else:
                     pose = person.key_points
                     label = person.action_hierarchy()
+
+                if get_confidence:
+                    pose = np.concatenate((pose, person.kp_confidence.reshape(-1, 1)), axis=-1)
                 x, y, w, h = person.pred_box
                 if self.normalize:
                     all_wh.append(np.array([w,h]).reshape(-1, 2))
