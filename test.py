@@ -1,6 +1,6 @@
 import json
 
-from PosTER.training import Trainer
+from PosTER.training import Trainer_Agent
 from PosTER.utils_train import get_dataset
 from PosTER.TITAN.titan_dataset import Sequence, Frame, Person
 
@@ -9,5 +9,5 @@ with open('config.json', 'r') as f:
 
 train_dataloader, val_dataloader = get_dataset(config)
 
-trainer = Trainer(config)
+trainer = Trainer_Agent(config).trainer
 trainer.train(train_dataloader, val_dataloader)
