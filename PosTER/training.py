@@ -227,8 +227,10 @@ class Trainer_FT(object):
   """
   def __init__(self, config):
     self.config = config
+    self.num_attribute_cat = 0
     if config['General']['DatasetType'] == 'TITAN':
       attributes = [4, 7, 9, 13, 4]
+      self.num_attribute_cat = len(attributes)
     else:
       raise "Not implemented"
     self.heads = PredictionHeads(attributes)
@@ -254,16 +256,25 @@ class Trainer_FT(object):
     avg_loss = 0
     log_interval = self.config['Training']['log_interval']
     intermediate_loss = 0
-
+    #correct_preds = [0]*self.num_attribute_cat
     for batch_idx, input_batch in enumerate(loop):
       keypoints, attributes = input_batch 
       keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
       
-      predictions = self.model(keypoints)
+      # Get a list of predictions corresponding to different attribute categories
+      # For each element of the list, we predict an attribute among those that belong in this category
+      prediction_list = self.model(keypoints)
       loss = 0
-      for i, pred_tensors in enumerate(predictions):
+      for i, pred in enumerate(prediction_list):
         targets = attributes[:, i].detach().cpu().clone()
-        loss += self.criterion(pred_tensors, targets.to(self.device))
+        loss += self.criterion(pred, targets.to(self.device))
+        
+        #Get argmax of predictions and check if they are correct
+       # pred_argmax = pred.data.max(1, keepdim=True)[1]
+        #correct_preds[i] = pred_argmax.eq(targets.view_as(pred)).cpu().sum()
+        
+        
+        
       self.optimizer.zero_grad()
       loss.backward()
       self.optimizer.step()
@@ -278,27 +289,38 @@ class Trainer_FT(object):
           })
         intermediate_loss = 0
     avg_loss = avg_loss/len(train_loader)
+    #avg_acc = correct_preds/len(train_loader)
     
 
     # Evaluate model on the validation set
     avg_val_loss = 0
     validation_samples_to_plot = []
+    correct_preds_val = [0]*self.num_attribute_cat
     with torch.no_grad():
       self.model.eval()
       for batch_idx, input_batch in enumerate(tqdm(val_loader)):
         keypoints, attributes = input_batch
         keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
         
-        predictions = self.model(keypoints)
+        # Get a list of predictions corresponding to different attribute categories
+        # For each element of the list, we predict an attribute among those that belong in this category
+        prediction_list = self.model(keypoints)
         loss = 0
-        for i, pred_tensors in enumerate(predictions):
+        for i, pred in enumerate(prediction_list):
           targets = attributes[:, i].detach().cpu().clone()
-          loss += self.criterion(pred_tensors, targets.to(self.device))
+          loss += self.criterion(pred, targets.to(self.device))
+          
+          #Get argmax of predictions and check if they are correct
+          pred_argmax_val = pred.data.max(1, keepdim=True)[1]
+          correct_preds_val[i] = pred_argmax_val.eq(targets.to(self.device).view_as(pred_argmax_val)).sum()
+          
         avg_val_loss += loss.item()
     avg_val_loss = avg_val_loss/len(val_loader)
+    avg_val_acc = [acc.long()/len(val_loader) for acc in correct_preds_val]
+
     #if self.config['wandb']['enable']:
     #  self.show_comparison(training_samples_to_plot, validation_samples_to_plot)
-    return avg_loss, avg_val_loss
+    return avg_loss, avg_val_loss, avg_val_acc
 
   def train(self, train_loader, val_loader):
     """
@@ -317,7 +339,7 @@ class Trainer_FT(object):
     self.model = self.model.to(self.device)
     for epoch in range(self.config['Training']['epochs']):
         #Train epoch and return losses
-        loss, val_loss = self.train_one_epoch(train_loader, val_loader)
+        loss, val_loss, val_acc = self.train_one_epoch(train_loader, val_loader)
 
         #Display results
         print(f"Loss epoch {epoch}: ", loss)
@@ -328,8 +350,9 @@ class Trainer_FT(object):
           wandb.log({
               "loss": loss, 
               "epoch": epoch,
-              "val_loss": val_loss
+              "val_loss": val_loss,
           })
+          wandb.log({f"accuracies/accuracy-{i}": acc for i, acc in enumerate(val_acc)})
         
         #Save best model
         if (self.config['Training']['save_checkpoint'] and val_loss < best_loss):
