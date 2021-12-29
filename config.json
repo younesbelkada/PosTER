@@ -42,10 +42,10 @@
     "Model":{
         "PosTER":{
             "dim_tokens":3,
-            "dim_embed":100,  
-            "dim_ff":2048,
-            "nlayers":4,  
-            "nhead":5,  
+            "dim_embed":64,  
+            "dim_ff":256,
+            "nlayers":2,  
+            "nhead":2,  
             "dropout":0.1 
         }
     },
@@ -56,13 +56,13 @@
     },
     "Training":{
         "optimizer":"adam",
-        "learning_rate":0.001,
+        "learning_rate":0.0001,
         "criterion":{
             "type":"crossentropy",
             "enable_bt":false,
             "lmbda":5e-3
         },
-        "batch_size":2,
+        "batch_size":16,
         "epochs":1,
         "save_checkpoint":true,
         "n_samples_visualization":5,

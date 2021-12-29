@@ -6,8 +6,8 @@ import torch.nn.functional as F
 
 from torch.utils.data import Dataset, DataLoader
 
-from PosTER.loss import point_loss, pose_bt_loss
-from PosTER.dataset import DynamicDataset, StaticDataset, my_collate
+from PosTER.loss import point_loss, pose_bt_loss, MultiTaskLossWrapper
+from PosTER.dataset import  StaticDataset, my_collate
 from PosTER.TITAN.titan_dataset import TITANDataset, TITANSimpleDataset
 from PosTER.TCG.tcg_dataset import TCGDataset, TCGSingleFrameDataset, tcg_collate_fn, tcg_pad_seqs
 
@@ -39,8 +39,9 @@ def get_criterion(config):
     elif criterion_type.lower() == 'mae':
         criterion = nn.L1Loss()
     elif criterion_type.lower() == 'crossentropy':
-        #criterion = nn.CrossEntropyLoss()
-        criterion = F.cross_entropy
+        criterion = nn.CrossEntropyLoss()
+        #criterion = F.cross_entropy
+        #criterion = MultiTaskLossWrapper()
     else:
         raise ValueError("Not implemented for the criterion type {}".format(criterion_type))
     return criterion

@@ -603,7 +603,7 @@ class TITANSimpleDataset(Dataset):
         for pose, label in list_of_pairs:
             pose_list.append(pose)
             label_list.append(label)
-        return torch.tensor(pose_list, dtype=torch.float32), torch.tensor(label_list, dtype=torch.long)
+        return torch.tensor(np.array(pose_list), dtype=torch.float32, requires_grad=True), torch.tensor(np.array(label_list), dtype=torch.long)
     
     def data_statistics(self):
         """ count the number of instances 

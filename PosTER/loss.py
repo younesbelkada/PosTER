@@ -41,3 +41,17 @@ def pose_bt_loss(masked_kps, full_kps, z1, z2, lmbda=5e-3, enable_bt=True):
     if enable_bt:
         return loss, bt_loss(z1, z2, lmbda)
     return loss, None
+
+
+class MultiTaskLossWrapper(nn.Module):
+    def __init__(self, task_num=5):
+        super(MultiTaskLossWrapper, self).__init__()
+        self.task_num = task_num
+        self.log_vars = nn.Parameter(torch.zeros((task_num)))
+
+    def forward(self, preds, attributes):
+        crossEntropy = nn.CrossEntropyLoss()
+        loss = 0
+        for i in range(self.task_num):
+            loss += torch.exp(-self.log_vars[i])*crossEntropy(preds[i].softmax(dim=1),attributes[:, i]) + self.log_vars[i]
+        return loss

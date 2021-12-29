@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from PosTER.dataset import DynamicDataset, StaticDataset
 from PosTER.model import PosTER, PosTER_FT, PredictionHeads
 from PosTER.utils_train import save_checkpoint, load_checkpoint, get_optimizer, get_criterion
 from PosTER.utils import convert_xyc_numpy
@@ -233,6 +232,7 @@ class Trainer_FT(object):
     else:
       raise "Not implemented"
     self.heads = PredictionHeads(attributes)
+    print(self.heads)
     self.poster_model = PosTER(config)
     checkpoint_file = "my_checkpoint.pth.tar"
     #load_checkpoint(checkpoint_file, self.poster_model)
@@ -240,7 +240,7 @@ class Trainer_FT(object):
     self.optimizer = get_optimizer(self.model, config)
     self.criterion = get_criterion(config)
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    #self.device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
+    self.criterion = self.criterion.to(self.device)
   def train_one_epoch(self, train_loader, val_loader):
     """
       Train the model according to the args specified on the config file and 
@@ -248,6 +248,7 @@ class Trainer_FT(object):
       :- train_loader -: training dataloader
       :- val_loader -: validation dataloader
     """
+    torch.autograd.set_detect_anomaly(True)
     self.model.train()
     loop = tqdm(train_loader)
     avg_loss = 0
@@ -261,8 +262,8 @@ class Trainer_FT(object):
       predictions = self.model(keypoints)
       loss = 0
       for i, pred_tensors in enumerate(predictions):
-        loss += self.criterion(pred_tensors, attributes[:, i].long())
-        
+        targets = attributes[:, i].detach().cpu().clone()
+        loss += self.criterion(pred_tensors, targets.to(self.device))
       self.optimizer.zero_grad()
       loss.backward()
       self.optimizer.step()
@@ -270,7 +271,6 @@ class Trainer_FT(object):
       
       avg_loss += loss.item()
       intermediate_loss += loss.item()
-      print(avg_loss)
       if batch_idx%log_interval == 0:
         if self.config['wandb']['enable']:
           wandb.log({
@@ -292,7 +292,8 @@ class Trainer_FT(object):
         predictions = self.model(keypoints)
         loss = 0
         for i, pred_tensors in enumerate(predictions):
-          loss += self.criterion(pred_tensors, attributes[:, i])
+          targets = attributes[:, i].detach().cpu().clone()
+          loss += self.criterion(pred_tensors, targets.to(self.device))
         avg_val_loss += loss.item()
     avg_val_loss = avg_val_loss/len(val_loader)
     #if self.config['wandb']['enable']:
