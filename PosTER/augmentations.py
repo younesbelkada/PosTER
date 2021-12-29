@@ -19,6 +19,67 @@ class NormalizeKeypoints(object):
         normalized_Y = np.array(keypoints_xyc[1])/self.n
         C = np.array(keypoints_xyc[2])
         return convert_keypoints_batch([normalized_X, normalized_Y, C])
+
+class NormalizeKeypointsRelative(object):
+    """
+    convert the key points from absolute coordinate to center+relative coordinate
+            all_poses shape (n_samples, n_keypoints, n_dim)
+            
+        COCO_KEYPOINTS = [
+            'nose',            # 0
+            'left_eye',        # 1
+            'right_eye',       # 2
+            'left_ear',        # 3
+            'right_ear',       # 4
+            'left_shoulder',   # 5
+            'right_shoulder',  # 6
+            'left_elbow',      # 7
+            'right_elbow',     # 8
+            'left_wrist',      # 9
+            'right_wrist',     # 10
+            'left_hip',        # 11
+            'right_hip',       # 12
+            'left_knee',       # 13
+            'right_knee',      # 14
+            'left_ankle',      # 15
+            'right_ankle',     # 16
+        ]
+
+        Args:
+            all_poses (np.ndarray): pose array, size (batch_size, V, C)
+
+        Returns:
+            converted_poses: size (batch_size, V+1, C)
+        """
+    def __init__(self):
+        pass
+    def __call__(self, keypoints):
+
+        keypoints_x, keypoints_y, keypoints_c = convert_xyc(keypoints)
+        keypoints_x, keypoints_y, keypoints_c = np.array(keypoints_x), np.array(keypoints_y), np.array(keypoints_c) 
+        
+        left_shoulder_x = keypoints_x[5, :]
+        right_shoulder_x = keypoints_x[6, :]
+        left_shoulder_y = keypoints_y[5, :]
+        right_shoulder_y = keypoints_y[6, :]
+
+        left_hip_x = keypoints_x[11, :]
+        right_hip_x = keypoints_x[12, :]
+        left_hip_y = keypoints_y[11, :]
+        right_hip_y = keypoints_y[12, :]
+
+        top_mid_x = 0.5*(left_shoulder_x + right_shoulder_x)
+        bottom_mid_x = 0.5*(left_hip_x + right_hip_x)
+        top_mid_y = 0.5*(left_shoulder_y + right_shoulder_y)
+        bottom_mid_y = 0.5*(left_hip_y + right_hip_y)
+
+        mid_x = 0.5*(top_mid_x+bottom_mid_x)
+        mid_y = 0.5*(top_mid_y+bottom_mid_y)
+
+        relative_coord_x = keypoints_x - mid_x
+        relative_coord_y = keypoints_y - mid_y
+
+        return convert_keypoints_batch([relative_coord_x, relative_coord_y, keypoints_c])
         
 class RandomTranslation(object):
     """
@@ -73,8 +134,11 @@ class RandomMask(object):
     def __call__(self, keypoints):
         full_keypoints = keypoints.clone()
         nb_body_parts = keypoints.shape[1]
-        nb_masks = torch.randint(0, self.N, (1,)).item()
-
+        nb_masks = torch.randint(1, self.N, (1,)).item()
         index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
-        keypoints = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
-        return keypoints, full_keypoints
+        masked_keypoints = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
+
+        nb_masks = torch.randint(1, self.N, (1,)).item()
+        index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
+        masked_keypoints_for_bt = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
+        return masked_keypoints_for_bt, masked_keypoints, full_keypoints

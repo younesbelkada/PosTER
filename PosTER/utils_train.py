@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 
 from PosTER.loss import point_loss, pose_bt_loss, MultiTaskLossWrapper
-from PosTER.dataset import  StaticDataset, my_collate
+from PosTER.dataset import  StaticDataset, my_collate, DynamicDataset, StaticDataset
 from PosTER.TITAN.titan_dataset import TITANDataset, TITANSimpleDataset
 from PosTER.TCG.tcg_dataset import TCGDataset, TCGSingleFrameDataset, tcg_collate_fn, tcg_pad_seqs
 

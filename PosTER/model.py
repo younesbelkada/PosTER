@@ -60,6 +60,7 @@ class PosTER_FT(nn.Module):
             nn.BatchNorm1d(1024),
             nn.ReLU(),
         )
+
         self.prediction_heads = prediction_heads
 
     def forward(self, x):

@@ -57,16 +57,17 @@ class Trainer(object):
     training_samples_to_plot = []
     for batch_idx, input_batch in enumerate(loop):
       if self.config['General']['Task'] == "Pose-modeling":
-        masked_keypoints, full_keypoints = self.mask_transform(input_batch)
-        masked_keypoints, full_keypoints = masked_keypoints.to(self.device), full_keypoints.to(self.device)
+        masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch)
+        masked_keypoints_for_bt, masked_keypoints, full_keypoints = masked_keypoints_for_bt.to(self.device), masked_keypoints.to(self.device), full_keypoints.to(self.device)
         full_keypoints = torch.flatten(full_keypoints, start_dim=1)
         if len(training_samples_to_plot) < self.config['Training']['n_samples_visualization']:
           training_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
         
-        cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
-        cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
+        cls_tokens_1, predicted_keypoints = self.model(masked_keypoints)
+        cls_tokens_2, _ = self.model(masked_keypoints_for_bt)
+        #cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
         
-        dist_loss, bt_loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+        dist_loss, bt_loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_1, cls_tokens_2, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
         loss = dist_loss
         if bt_loss:
           loss = (dist_loss + bt_loss)/2
@@ -100,14 +101,15 @@ class Trainer(object):
       self.model.eval()
       for batch_idx, input_batch in enumerate(tqdm(val_loader)):
         if self.config['General']['Task'] == "Pose-modeling":
-          masked_keypoints, full_keypoints = self.mask_transform(input_batch)
-          masked_keypoints, full_keypoints = masked_keypoints.to(self.device), full_keypoints.to(self.device)
+          masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch)
+          masked_keypoints_for_bt, masked_keypoints, full_keypoints = masked_keypoints_for_bt.to(self.device), masked_keypoints.to(self.device), full_keypoints.to(self.device)
           full_keypoints = torch.flatten(full_keypoints, start_dim=1)
           if len(validation_samples_to_plot) < self.config['Training']['n_samples_visualization']:
             validation_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
-          cls_tokens_masked, predicted_keypoints = self.model(masked_keypoints)
-          cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
-          dist_loss_val, bt_loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_masked, cls_tokens_full, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+          cls_tokens_1, predicted_keypoints = self.model(masked_keypoints)
+          cls_tokens_2, _ = self.model(masked_keypoints_for_bt)
+          #cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
+          dist_loss_val, bt_loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_1, cls_tokens_2, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
           val_loss = dist_loss_val
           if bt_loss_val:
             val_loss = (dist_loss_val + bt_loss_val)/2
@@ -154,7 +156,7 @@ class Trainer(object):
         #Save best model
         if (self.config['Training']['save_checkpoint'] and val_loss < best_loss):
             best_loss = val_loss
-            save_checkpoint(self.model)
+            save_checkpoint(self.model, filename=self.config['Model']['PosTER']['filename'])
   def show_comparison(self, training_samples, validation_samples):
     """
       Runs an inference on some samples in the validation set and 
@@ -236,8 +238,8 @@ class Trainer_FT(object):
     self.heads = PredictionHeads(attributes)
     print(self.heads)
     self.poster_model = PosTER(config)
-    checkpoint_file = "my_checkpoint.pth.tar"
-    #load_checkpoint(checkpoint_file, self.poster_model)
+    checkpoint_file = self.config['Model']['PosTER']['filename']
+    load_checkpoint(checkpoint_file, self.poster_model)
     self.model = PosTER_FT(self.poster_model , self.heads)
     self.optimizer = get_optimizer(self.model, config)
     self.criterion = get_criterion(config)
@@ -270,7 +272,7 @@ class Trainer_FT(object):
         loss += self.criterion(pred, targets.to(self.device))
         
         #Get argmax of predictions and check if they are correct
-       # pred_argmax = pred.data.max(1, keepdim=True)[1]
+        #pred_argmax = pred.data.max(1, keepdim=True)[1]
         #correct_preds[i] = pred_argmax.eq(targets.view_as(pred)).cpu().sum()
         
         

@@ -13,7 +13,7 @@ from torchvision import transforms
 
 from PosTER.predictor import PifPafPredictor
 from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input, get_input_path
-from PosTER.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation, RandomMask
+from PosTER.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation, RandomMask, NormalizeKeypointsRelative
 
 def my_collate(batch):
     # TO DO: Filter out empty arrays
@@ -127,7 +127,8 @@ class TransformsAgent(object):
         if self.config['translation']['enable']:
             transform.append(RandomTranslation(self.config['translation']['p'], self.config['translation']['distance'], im_size))
         if self.config['normalize']:
-            transform.append(NormalizeKeypoints(im_size))
+            #transform.append(NormalizeKeypoints(im_size))
+            transform.append(NormalizeKeypointsRelative())
         if self.config['body_parts']:
             transform.append(BodyParts())
         

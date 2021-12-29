@@ -1,7 +1,7 @@
 {
     "General":{
-        "DatasetType":"TITAN",
-        "Task":"Attribute-classification"
+        "DatasetType":"Static",
+        "Task":"Pose-modeling"
     },
     "Dataset":{ 
         "DynamicDataset":{
@@ -31,7 +31,7 @@
                 "distance":50
             },
             "mask":{
-                "N":7
+                "N":3
             }
         },
         "split":{
@@ -46,7 +46,8 @@
             "dim_ff":256,
             "nlayers":2,  
             "nhead":2,  
-            "dropout":0.1 
+            "dropout":0.1,
+            "filename":"posTER_pretrained.p"
         }
     },
     "wandb":{
@@ -58,8 +59,8 @@
         "optimizer":"adam",
         "learning_rate":0.0001,
         "criterion":{
-            "type":"crossentropy",
-            "enable_bt":false,
+            "type":"mse",
+            "enable_bt":true,
             "lmbda":5e-3
         },
         "batch_size":16,
