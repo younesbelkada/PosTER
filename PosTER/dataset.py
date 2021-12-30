@@ -127,8 +127,8 @@ class TransformsAgent(object):
         if self.config['translation']['enable']:
             transform.append(RandomTranslation(self.config['translation']['p'], self.config['translation']['distance'], im_size))
         if self.config['normalize']:
-            #transform.append(NormalizeKeypoints(im_size))
-            transform.append(NormalizeKeypointsRelative())
+            transform.append(NormalizeKeypoints(im_size))
+            #transform.append(NormalizeKeypointsRelative())
         if self.config['body_parts']:
             transform.append(BodyParts())
         
