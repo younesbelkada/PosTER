@@ -42,12 +42,12 @@
     "Model":{
         "PosTER":{
             "dim_tokens":3,
-            "dim_embed":64,  
-            "dim_ff":256,
-            "nlayers":2,  
-            "nhead":2,  
+            "dim_embed":128,  
+            "dim_ff":1024,
+            "nlayers":4,  
+            "nhead":8,  
             "dropout":0.1,
-            "filename":"posTER_pretrained.p"
+            "filename":"posTER_pretrained.pth.tar"
         }
     },
     "wandb":{
@@ -56,14 +56,14 @@
         "project_name":"PosTER"
     },
     "Training":{
-        "optimizer":"adam",
-        "learning_rate":0.0001,
+        "optimizer":"adamw",
+        "learning_rate":3e-4,
         "criterion":{
             "type":"mse",
             "enable_bt":true,
             "lmbda":5e-3
         },
-        "batch_size":16,
+        "batch_size":128,
         "epochs":1,
         "save_checkpoint":true,
         "n_samples_visualization":5,

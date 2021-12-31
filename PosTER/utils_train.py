@@ -22,6 +22,8 @@ def get_optimizer(model, config):
         optimizer = optim.Adam(model.parameters(), lr = config['Training']['learning_rate'])
     elif optim_type.lower() == 'sgd':
         optimizer = optim.SGD(model.parameters(), lr = config['Training']['learning_rate'])
+    elif optim_type.lower() == 'adamw':
+        optimizer = optim.AdamW(model.parameters(), lr = config['Training']['learning_rate'])
     else:
         raise ValueError("Not implemented for the optimizer type {}".format(optim_type))
     return optimizer
