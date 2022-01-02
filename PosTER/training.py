@@ -2,6 +2,7 @@ import wandb
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
+import numpy as np 
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -297,7 +298,9 @@ class Trainer_FT(object):
     # Evaluate model on the validation set
     avg_val_loss = 0
     validation_samples_to_plot = []
-    correct_preds_val = [0]*self.num_attribute_cat
+    correct_preds_val = [0] * self.num_attribute_cat
+    list_pr_labels_val = [ [] for _ in range(self.num_attribute_cat)]
+    list_pr_out_val = [ [] for _ in range(self.num_attribute_cat)]
     with torch.no_grad():
       self.model.eval()
       for batch_idx, input_batch in enumerate(tqdm(val_loader)):
@@ -315,8 +318,15 @@ class Trainer_FT(object):
           #Get argmax of predictions and check if they are correct
           pred_argmax_val = pred.data.max(1, keepdim=True)[1]
           correct_preds_val[i] += pred_argmax_val.eq(targets.to(self.device).view_as(pred_argmax_val)).sum()
+          list_pr_out_val[i].extend(nn.functional.softmax(pred, dim=-1).detach().cpu().clone().numpy().tolist())
+          list_pr_labels_val[i].extend(targets.numpy().tolist())
           
         avg_val_loss += loss.item()
+    
+    for i in range(self.num_attribute_cat):
+      wandb.log({"conf_mat {i}" : wandb.plot.confusion_matrix(y_true= np.array(list_pr_labels_val[i]), 
+                                                             preds= np.array(list_pr_out_val[i])) })
+          
     avg_val_loss = avg_val_loss/len(val_loader.dataset)
     avg_val_acc = [acc.long()/len(val_loader.dataset) for acc in correct_preds_val]
 
