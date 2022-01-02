@@ -240,12 +240,12 @@ class Trainer_FT(object):
     print(self.heads)
     self.poster_model = PosTER(config)
     checkpoint_file = self.config['Model']['PosTER']['filename']
-    load_checkpoint(checkpoint_file, self.poster_model)
+    #load_checkpoint(checkpoint_file, self.poster_model)
     self.model = PosTER_FT(self.poster_model , self.heads)
     self.optimizer = get_optimizer(self.model, config)
     self.criterion = get_criterion(config)
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    self.criterion = self.criterion.to(self.device)
+    self.criterion = self.criterion
   def train_one_epoch(self, train_loader, val_loader):
     """
       Train the model according to the args specified on the config file and 
@@ -276,8 +276,6 @@ class Trainer_FT(object):
         #pred_argmax = pred.data.max(1, keepdim=True)[1]
         #correct_preds[i] = pred_argmax.eq(targets.view_as(pred)).cpu().sum()
         
-        
-        
       self.optimizer.zero_grad()
       loss.backward()
       self.optimizer.step()
@@ -301,6 +299,7 @@ class Trainer_FT(object):
     correct_preds_val = [0] * self.num_attribute_cat
     list_pr_labels_val = [ [] for _ in range(self.num_attribute_cat)]
     list_pr_out_val = [ [] for _ in range(self.num_attribute_cat)]
+    list_pr_out_val_argmax = [ [] for _ in range(self.num_attribute_cat)]
     with torch.no_grad():
       self.model.eval()
       for batch_idx, input_batch in enumerate(tqdm(val_loader)):
@@ -318,14 +317,19 @@ class Trainer_FT(object):
           #Get argmax of predictions and check if they are correct
           pred_argmax_val = pred.data.max(1, keepdim=True)[1]
           correct_preds_val[i] += pred_argmax_val.eq(targets.to(self.device).view_as(pred_argmax_val)).sum()
-          list_pr_out_val[i].extend(nn.functional.softmax(pred, dim=-1).detach().cpu().clone().numpy().tolist())
-          list_pr_labels_val[i].extend(targets.numpy().tolist())
-          
-        avg_val_loss += loss.item()
-    
+          if len(list_pr_out_val[i]) == 0:
+            list_pr_out_val[i] = nn.functional.softmax(pred, dim=-1).detach().cpu().clone().numpy()
+            list_pr_out_val_argmax[i] = pred_argmax_val.detach().cpu().clone().numpy().flatten()
+            list_pr_labels_val[i] = targets.numpy()
+          else:
+            list_pr_out_val[i] = np.append(list_pr_out_val[i], nn.functional.softmax(pred, dim=-1).detach().cpu().clone().numpy(), axis=0)
+            list_pr_labels_val[i] = np.append(list_pr_labels_val[i], targets.numpy())
+            list_pr_out_val_argmax[i] = np.append(list_pr_out_val_argmax[i], pred_argmax_val.detach().cpu().clone().flatten().numpy())
     for i in range(self.num_attribute_cat):
-      wandb.log({"conf_mat {i}" : wandb.plot.confusion_matrix(y_true= np.array(list_pr_labels_val[i]), 
-                                                             preds= np.array(list_pr_out_val[i])) })
+      wandb.log({"conf_mat_{}".format(i) : wandb.plot.confusion_matrix(probs=list_pr_out_val[i],
+                        y_true=list_pr_labels_val[i], preds=None)})
+      wandb.log({"conf_mat_argmax_{}".format(i) : wandb.plot.confusion_matrix(probs=None,
+                        y_true=list_pr_labels_val[i], preds=list_pr_out_val_argmax[i])})
           
     avg_val_loss = avg_val_loss/len(val_loader.dataset)
     avg_val_acc = [acc.long()/len(val_loader.dataset) for acc in correct_preds_val]
