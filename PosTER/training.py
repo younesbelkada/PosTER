@@ -258,7 +258,7 @@ class Trainer_FT(object):
     avg_loss = 0
     log_interval = self.config['Training']['log_interval']
     intermediate_loss = 0
-    #correct_preds = [0]*self.num_attribute_cat
+    correct_preds = [0]*self.num_attribute_cat
     for batch_idx, input_batch in enumerate(loop):
       keypoints, attributes = input_batch 
       keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
