@@ -88,6 +88,7 @@ def get_dataset(config):
         #train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], shuffle=True)
 
         val_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='val',  dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
+        
         val_simple_dataset = TITANSimpleDataset(val_data, merge_cls=False)
         val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
         #val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'])
@@ -98,7 +99,7 @@ def get_dataset(config):
         train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
         
         val_data = TCGDataset(datapath, label_type, eval_type="xs", eval_id=1, training=False)
-        val_simple_dataset = TCGSingleFrameDataset(train_data)
+        val_simple_dataset = TCGSingleFrameDataset(val_data)
         val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
         
 

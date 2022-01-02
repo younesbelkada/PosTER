@@ -284,13 +284,13 @@ class Trainer_FT(object):
       
       avg_loss += loss.item()
       intermediate_loss += loss.item()
-      if batch_idx%log_interval == 0:
+      if (batch_idx+1)%log_interval == 0:
         if self.config['wandb']['enable']:
           wandb.log({
               "intermediate_loss": intermediate_loss/log_interval
           })
         intermediate_loss = 0
-    avg_loss = avg_loss/len(train_loader)
+    avg_loss = avg_loss/len(train_loader.dataset)
     #avg_acc = correct_preds/len(train_loader)
     
 
@@ -314,13 +314,13 @@ class Trainer_FT(object):
           
           #Get argmax of predictions and check if they are correct
           pred_argmax_val = pred.data.max(1, keepdim=True)[1]
-          correct_preds_val[i] = pred_argmax_val.eq(targets.to(self.device).view_as(pred_argmax_val)).sum()
+          correct_preds_val[i] += pred_argmax_val.eq(targets.to(self.device).view_as(pred_argmax_val)).sum()
           
         avg_val_loss += loss.item()
-    avg_val_loss = avg_val_loss/len(val_loader)
-    avg_val_acc = [acc.long()/len(val_loader) for acc in correct_preds_val]
+    avg_val_loss = avg_val_loss/len(val_loader.dataset)
+    avg_val_acc = [acc.long()/len(val_loader.dataset) for acc in correct_preds_val]
 
-    #if self.config['wandb']['enable']:
+    #if self.config['wandb']['enable']:prediction_list
     #  self.show_comparison(training_samples_to_plot, validation_samples_to_plot)
     return avg_loss, avg_val_loss, avg_val_acc
 
