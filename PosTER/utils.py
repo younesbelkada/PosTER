@@ -139,3 +139,17 @@ def get_input_path(path_input, ext, split=None, array_sets=None):
     else:
         paths = glob(os.path.join(path_input, '**', '*'+ext), recursive=True)
     return paths
+
+def from_stats_to_weights(stat_dicts):
+    weights_dict = {}
+    for categories in stat_dicts.keys():
+        weights_dict[categories] = 1. - (np.array(stat_dicts[categories]) / sum(stat_dicts.values()) )
+    return weights_dict
+
+def return_weights(weights_dict, labels):
+    final_weights = np.zeros(labels.shape[0])
+    for i, array_labels in enumerate(labels):
+        for j in range(len(array_labels)):
+            final_weights[i] += weights_dict[j][array_labels[j]]
+            break
+    return 1-final_weights

@@ -336,7 +336,7 @@ class TITANSimpleDataset(Dataset):
                  use_img=False, 
                  relative_kp=False,
                  rm_center=False,
-                 normalize=False) -> None:
+                 normalize=False, transforms=None) -> None:
         super().__init__()
         """ merge_cls: remove the unlearnable classes, and merge the hierarchical labels into one set,
                        see `self.merge_labels` for details 
@@ -354,6 +354,7 @@ class TITANSimpleDataset(Dataset):
         self.normalize = normalize
         self.n_feature = None # number of features, will be set in self.get_poses/patches_from_frames(frames) 
         frames = self.form_frames(titan_dataset.seqs)
+        self.transforms = transforms
         # use keypoints by default, also possible to use patches 
         if not self.use_img:
             self.all_poses, self.all_labels = self.get_poses_from_frames(frames) 
@@ -376,11 +377,13 @@ class TITANSimpleDataset(Dataset):
     def __getitem__(self, index):
         if not self.use_img:
             pose = self.all_poses[index]
+            pose[:, :2] = pose[:, :2]/1920
             label = self.all_labels[index]
             return pose, label
         else:
             pose = np.array(self.all_poses[index], dtype=np.float32) / 255
             label = self.all_labels[index]
+
             return pose, label
     
     def __len__(self):
@@ -613,7 +616,11 @@ class TITANSimpleDataset(Dataset):
             stat_dict = {search_key(Person.valid_action_dict, l):c for l, c in zip(label, count)}
             return stat_dict
         else:
-            raise NotImplementedError
+            stat_dict = {}
+            for i in range(self.all_labels.shape[1]):
+                label, count = np.unique(self.all_labels[:, i], return_counts=True)
+                stat_dict[i] = {'labels':label.tolist(), 'counts':count.tolist()}
+            return stat_dict
         
     def print_statistics(self):
         print("The simplified {} dataset consists of: \n {}".format(self.split, self.data_statistics()))

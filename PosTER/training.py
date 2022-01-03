@@ -232,7 +232,8 @@ class Trainer_FT(object):
     self.config = config
     self.num_attribute_cat = 0
     if config['General']['DatasetType'] == 'TITAN':
-      attributes = [4, 7, 9, 13, 4]
+      #attributes = [4, 7, 9, 13, 4]
+      attributes = [5]
       self.num_attribute_cat = len(attributes)
     else:
       raise "Not implemented"
@@ -241,7 +242,27 @@ class Trainer_FT(object):
     self.poster_model = PosTER(config)
     checkpoint_file = self.config['Model']['PosTER']['filename']
     #load_checkpoint(checkpoint_file, self.poster_model)
-    self.model = PosTER_FT(self.poster_model , self.heads)
+    #self.model = PosTER_FT(self.poster_model , self.heads)
+    self.model = nn.Sequential(
+      nn.Linear(51, 1028),
+      nn.ReLU(True),
+      nn.BatchNorm1d(1028),
+      nn.Linear(1028, 1028),
+      nn.ReLU(True),
+      nn.Linear(1028, 1028),
+      nn.BatchNorm1d(1028),
+      nn.ReLU(True),
+      nn.Linear(1028, 1028),
+      nn.BatchNorm1d(1028),
+      nn.ReLU(True),
+      nn.Linear(1028, 1028),
+      nn.BatchNorm1d(1028),
+      nn.ReLU(True),
+      nn.Linear(1028, 1028),
+      nn.BatchNorm1d(1028),
+      nn.ReLU(True),
+      nn.Linear(1028, 5)
+    )
     self.optimizer = get_optimizer(self.model, config)
     self.criterion = get_criterion(config)
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -266,16 +287,16 @@ class Trainer_FT(object):
       
       # Get a list of predictions corresponding to different attribute categories
       # For each element of the list, we predict an attribute among those that belong in this category
-      prediction_list = self.model(keypoints)
+      #prediction_list = self.model(keypoints)
+      prediction_list = [self.model(torch.flatten(keypoints, start_dim=1))]
       loss = 0
       for i, pred in enumerate(prediction_list):
         targets = attributes[:, i].detach().cpu().clone()
         loss += self.criterion(pred, targets.to(self.device))
-        
         #Get argmax of predictions and check if they are correct
         #pred_argmax = pred.data.max(1, keepdim=True)[1]
         #correct_preds[i] = pred_argmax.eq(targets.view_as(pred)).cpu().sum()
-        
+      #exit(0)
       self.optimizer.zero_grad()
       loss.backward()
       self.optimizer.step()
@@ -308,7 +329,8 @@ class Trainer_FT(object):
         
         # Get a list of predictions corresponding to different attribute categories
         # For each element of the list, we predict an attribute among those that belong in this category
-        prediction_list = self.model(keypoints)
+        #prediction_list = self.model(keypoints)
+        prediction_list = [self.model(torch.flatten(keypoints, start_dim=1))]
         loss = 0
         for i, pred in enumerate(prediction_list):
           targets = attributes[:, i].detach().cpu().clone()
