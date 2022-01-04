@@ -1,8 +1,8 @@
 import json
 
-from PosTER.training import Trainer_Agent
-from PosTER.utils_train import get_dataset
-from PosTER.TITAN.titan_dataset import Sequence, Frame, Person
+from PosTER.Agents.main_agent import Trainer_Agent
+from PosTER.Agents.utils_agent import get_dataset
+from PosTER.Datasets.titan_dataset import Sequence, Frame, Person
 
 with open('config.json', 'r') as f:
     config = json.load(f)
