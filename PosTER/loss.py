@@ -42,6 +42,12 @@ def pose_bt_loss(masked_kps, full_kps, z1, z2, lmbda=5e-3, enable_bt=True):
         return loss, bt_loss(z1, z2, lmbda)
     return loss, None
 
+def pose_bt_loss_mae(masked_kps, full_kps, z1, z2, lmbda=5e-3, enable_bt=True):
+    loss = nn.L1Loss()(masked_kps, full_kps)
+    if enable_bt:
+        return loss, bt_loss(z1, z2, lmbda)
+    return loss, None
+
 
 class MultiTaskLossWrapper(nn.Module):
     def __init__(self, task_num=5):

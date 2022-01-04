@@ -2,7 +2,7 @@ import random
 import torch
 import numpy as np
 
-from PosTER.utils import convert_xyc, convert_keypoints, convert_keypoints_batch
+from PosTER.Datasets.utils import convert_xyc, convert_keypoints, convert_keypoints_batch
 
 class NormalizeKeypoints(object):
     """
@@ -97,6 +97,10 @@ class RandomTranslation(object):
         self.max_width, self.max_height = max_size
 
     def __call__(self, keypoints):
+        """
+            Tries to translate the keypoints in a random x, y direction if it fits the image size.
+            Keeps the original keypoints otherwise
+        """
         if random.uniform(0, 1) <= self.p:
             random_distance_x = random.uniform(-self.distance, self.distance)
             random_distance_y = random.uniform(-self.distance, self.distance)
@@ -104,14 +108,13 @@ class RandomTranslation(object):
             X, Y, C = np.array(X), np.array(Y), np.array(C)
             max_x, max_y = np.max(X), np.max(Y)
             min_x, min_y = np.min(X), np.min(Y)
-            random_distance_x, random_distance_y = 0, 0
-            if (random_distance_x + max_x > self.max_width) or (random_distance_x + min_x < 0) or (random_distance_y + max_y > self.max_height) or (random_distance_y + min_y < 0): 
+            random_distance_x, random_distance_y = random.uniform(-self.distance, self.distance), random.uniform(-self.distance, self.distance)
+            if (random_distance_x + max_x <= self.max_width) and (random_distance_x + min_x >= 0) and (random_distance_y + max_y <= self.max_height) and (random_distance_y + min_y >= 0): 
                 random_distance_x = random.uniform(-self.distance, self.distance)
                 random_distance_y = random.uniform(-self.distance, self.distance)
-                print(random_distance_x, random_distance_y)
-            normalized_X = (X+random_distance_x)
-            normalized_Y = (Y+random_distance_y)
-            keypoints = convert_keypoints_batch([normalized_X, normalized_Y, C])
+                normalized_X = (X+random_distance_x)
+                normalized_Y = (Y+random_distance_y)
+                keypoints = convert_keypoints_batch([normalized_X, normalized_Y, C])
         return keypoints
 
 class BodyParts(object):
@@ -135,7 +138,9 @@ class RandomMask(object):
     def __call__(self, keypoints):
         full_keypoints = keypoints.clone()
         nb_body_parts = keypoints.shape[1]
+        
         nb_masks = torch.randint(1, self.N, (1,)).item()
+
         index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
         masked_keypoints = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
 

@@ -26,7 +26,7 @@
             "normalize":true,
             "body_parts":true,
             "translation":{
-                "enable":false,
+                "enable":true,
                 "p":0.5,
                 "distance":50
             },
@@ -59,12 +59,12 @@
         "optimizer":"adamw",
         "learning_rate":3e-4,
         "criterion":{
-            "type":"mse",
+            "type":"mae",
             "enable_bt":true,
             "lmbda":5e-3
         },
-        "batch_size":128,
-        "epochs":1,
+        "batch_size":32,
+        "epochs":2,
         "save_checkpoint":true,
         "n_samples_visualization":5,
         "log_interval":10

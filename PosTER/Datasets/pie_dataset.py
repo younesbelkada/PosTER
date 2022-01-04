@@ -11,9 +11,9 @@ from torch.utils.data.dataloader import default_collate
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
-from PosTER.predictor import PifPafPredictor
-from PosTER.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input, get_input_path
-from PosTER.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation, RandomMask, NormalizeKeypointsRelative
+from PosTER.Datasets.predictor import PifPafPredictor
+from PosTER.Datasets.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input, get_input_path
+from PosTER.Datasets.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation, RandomMask, NormalizeKeypointsRelative
 
 def my_collate(batch):
     # TO DO: Filter out empty arrays

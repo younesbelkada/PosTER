@@ -6,11 +6,11 @@ import torch.nn.functional as F
 
 from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 
-from PosTER.loss import point_loss, pose_bt_loss, MultiTaskLossWrapper
-from PosTER.dataset import  StaticDataset, TransformsAgent, my_collate, DynamicDataset, StaticDataset
-from PosTER.TITAN.titan_dataset import TITANDataset, TITANSimpleDataset
-from PosTER.TCG.tcg_dataset import TCGDataset, TCGSingleFrameDataset, tcg_collate_fn, tcg_pad_seqs
-from PosTER.utils import from_stats_to_weights, return_weights
+from PosTER.loss import point_loss, pose_bt_loss, MultiTaskLossWrapper, pose_bt_loss_mae
+from PosTER.Datasets.pie_dataset import  StaticDataset, TransformsAgent, my_collate, DynamicDataset, StaticDataset
+from PosTER.Datasets.titan_dataset import TITANDataset, TITANSimpleDataset
+from PosTER.Datasets.tcg_dataset import TCGDataset, TCGSingleFrameDataset, tcg_collate_fn, tcg_pad_seqs
+from PosTER.Datasets.utils import from_stats_to_weights, return_weights
 
 def get_optimizer(model, config):
     """
@@ -40,7 +40,7 @@ def get_criterion(config):
     elif criterion_type.lower() == 'pointloss':
         criterion = point_loss
     elif criterion_type.lower() == 'mae':
-        criterion = nn.L1Loss()
+        criterion = pose_bt_loss_mae
     elif criterion_type.lower() == 'crossentropy':
         criterion = nn.CrossEntropyLoss()
         #criterion = F.cross_entropy
@@ -110,6 +110,4 @@ def get_dataset(config):
         val_data = TCGDataset(datapath, label_type, eval_type="xs", eval_id=1, training=False)
         val_simple_dataset = TCGSingleFrameDataset(val_data)
         val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
-        
-
     return train_dataloader, val_dataloader
