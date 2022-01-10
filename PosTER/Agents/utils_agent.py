@@ -85,7 +85,7 @@ def get_dataset(config):
     elif dataset_type.lower() == 'titan':
         train_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='train', dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
         transforms = TransformsAgent(config).get_transforms((1980, 1980))
-        train_simple_dataset = TITANSimpleDataset(train_data, merge_cls=True, transforms=transforms)
+        train_simple_dataset = TITANSimpleDataset(train_data, merge_cls=True, transforms=transforms, inflate=0.9)
         
         class_weight = [1/8, 1, 110, 10, 4]
         samples_weight = []
@@ -94,8 +94,8 @@ def get_dataset(config):
         sampler = WeightedRandomSampler(samples_weight, len(samples_weight), replacement=True)
         
         #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
-        train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
-        #train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], shuffle=True)
+        #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
+        train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
 
         val_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='val',  dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
         val_simple_dataset = TITANSimpleDataset(val_data, merge_cls=True, transforms=transforms)

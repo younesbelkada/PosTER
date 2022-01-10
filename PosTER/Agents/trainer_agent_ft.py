@@ -1,6 +1,8 @@
 import wandb
 import torch
 import torch.nn as nn
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np 
 
@@ -12,6 +14,7 @@ from PosTER.Models.utils_models import PredictionHeads, BaseLine
 from PosTER.Agents.utils_agent import save_checkpoint, get_optimizer, get_criterion
 from PosTER.Datasets.utils import convert_xyc_numpy
 from PosTER.Datasets.paint_keypoints import KeypointPainter, COCO_PERSON_SKELETON
+from PosTER.Datasets.titan_dataset import Person
 
 class Trainer_FT(object):
   """
@@ -28,7 +31,6 @@ class Trainer_FT(object):
     else:
       raise "Not implemented"
     self.heads = PredictionHeads(attributes)
-    print(self.heads)
     self.poster_model = PosTER(config)
     checkpoint_file = self.config['Model']['PosTER']['filename']
     #load_checkpoint(checkpoint_file, self.poster_model)
@@ -55,16 +57,14 @@ class Trainer_FT(object):
     train_plot_samples = []
     val_plot_samples = []
     for batch_idx, input_batch in enumerate(loop):
-      keypoints, attributes = input_batch 
+      keypoints, attributes = input_batch
       keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
       
       # Get a list of predictions corresponding to different attribute categories
       # For each element of the list, we predict an attribute among those that belong in this category
       #prediction_list = self.model(keypoints)
       if len(train_plot_samples) < self.config['Training']['n_samples_visualization']:
-        train_plot_samples.append((torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :], attributes[0].detach().cpu()))
-      else:
-        break
+        train_plot_samples.append([torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :].detach().cpu().numpy(), attributes[0].detach().cpu().numpy()])
       pred = self.model(torch.flatten(keypoints, start_dim=1))
       loss = 0
       targets = attributes.detach().cpu().clone().squeeze(1)
@@ -90,7 +90,6 @@ class Trainer_FT(object):
 
     # Evaluate model on the validation set
     avg_val_loss = 0
-    validation_samples_to_plot = []
     correct_preds_val = [0] * self.num_attribute_cat
     list_pr_labels_val = [ [] for _ in range(self.num_attribute_cat)]
     list_pr_out_val = [ [] for _ in range(self.num_attribute_cat)]
@@ -102,9 +101,7 @@ class Trainer_FT(object):
         keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
         
         if len(val_plot_samples) < self.config['Training']['n_samples_visualization']:
-          val_plot_samples.append((torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :], attributes[0].detach().cpu()))
-        else:
-          break
+          val_plot_samples.append([torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :].detach().cpu().numpy(), attributes[0].detach().cpu().numpy()])
         # Get a list of predictions corresponding to different attribute categories
         # For each element of the list, we predict an attribute among those that belong in this category
         #prediction_list = self.model(keypoints)
@@ -134,7 +131,7 @@ class Trainer_FT(object):
     avg_val_loss = avg_val_loss/len(val_loader.dataset)
     avg_val_acc = [acc.long()/len(val_loader.dataset) for acc in correct_preds_val]
 
-    self.show_comparison( train_plot_samples, val_plot_samples)
+    self.show_comparison(train_plot_samples, val_plot_samples)
     #if self.config['wandb']['enable']:prediction_list
     #  self.show_comparison(training_samples_to_plot, validation_samples_to_plot)
     return avg_loss, avg_val_loss, avg_val_acc
@@ -190,16 +187,19 @@ class Trainer_FT(object):
     with torch.no_grad():
       for i, training_sample in enumerate(training_samples):
         plt.axis('off')
-        x, y, v = convert_xyc_numpy(training_sample[0].numpy())
-        axes[0, i].invert_yaxis()
-        axes[0, i].axis('off')
-        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON,  mask_joints=False)
+        x, y, v = convert_xyc_numpy(training_sample[0])
+        axes[i].invert_yaxis()
+        axes[i].axis('off')
+        kps_painter._draw_skeleton(axes[i], x, y, v, skeleton=COCO_PERSON_SKELETON,  mask_joints=False)
       
-        pred = self.model(training_sample[0].to(self.device).unsqueeze(0))
-        pred_argmax = pred.data.max(1, keepdim=True)[1]
-        target = training_sample[1]
-        plt.text(i*10,y, f"Label: {target}, Pred: {pred}")
-    #plt.show()
+        pred = self.model(torch.tensor(training_sample[0]).to(self.device).unsqueeze(0))
+        pred_argmax = pred.data.max(1, keepdim=True)[1].item()
+        target = training_sample[1].item()
+
+        target = Person.pred_list_to_str([target])
+        pred_argmax = Person.pred_list_to_str([pred_argmax])
+
+        axes[i].text(0, 0, f"Label: {target}, Pred: {pred_argmax}", horizontalalignment='center', verticalalignment='center', transform=axes[i].transAxes)
     if self.config['wandb']['enable']:
       plot = wandb.Image(plt)
       wandb.log(
@@ -216,40 +216,20 @@ class Trainer_FT(object):
     with torch.no_grad():
       for i, validation_sample in enumerate(validation_samples):
         plt.axis('off')
-        x, y, v = convert_xyc_numpy(validation_sample[0].numpy())
-        axes[0, i].invert_yaxis()
-        axes[0, i].axis('off')
-        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON,  mask_joints=False)
+        x, y, v = convert_xyc_numpy(validation_sample[0])
+        axes[i].invert_yaxis()
+        axes[i].axis('off')
+        kps_painter._draw_skeleton(axes[i], x, y, v, skeleton=COCO_PERSON_SKELETON,  mask_joints=False)
       
-        pred = self.model(validation_sample[0].to(self.device).unsqueeze(0))
-        pred_argmax = pred.data.max(1, keepdim=True)[1]
-        target = validation_sample[1]
-        plt.text(i*10,y, f"Label: {target}, Pred: {pred}")
-    #plt.show()
-    if self.config['wandb']['enable']:
-      plot = wandb.Image(plt)
-      wandb.log(
-        {
-          "validation_plot":plot
-        }
-      )    
-    print("Generating some samples on the validation set")
-    plt.ioff()
-    fig, axes = plt.subplots(nrows=1, ncols=self.config['Training']['n_samples_visualization'], figsize=(10,10))
-    fig.suptitle("Example predictions on the validation set", fontsize=20)
-    kps_painter = KeypointPainter()
-    with torch.no_grad():
-      for i, validation_sample in enumerate(validation_samples):
-        plt.axis('off')
-        x, y, v = convert_xyc_numpy(validation_sample[0].numpy())
-        axes[0, i].invert_yaxis()
-        axes[0, i].axis('off')
-        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON,  mask_joints=False)
-      
-        pred = self.model(validation_sample[0].to(self.device).unsqueeze(0))
-        pred_argmax = pred.data.max(1, keepdim=True)[1]
-        target = validation_sample[1]
-        plt.text(i*10,y, f"Label: {target}, Pred: {pred}")
+        pred = self.model(torch.tensor(validation_sample[0]).to(self.device).unsqueeze(0))
+        pred_argmax = pred.data.max(1, keepdim=True)[1].item()
+        target = validation_sample[1].item()
+        #plt.text(i*10,y, f"Label: {target}, Pred: {pred_argmax}")
+
+        target = Person.pred_list_to_str([target])[0]
+        pred_argmax = Person.pred_list_to_str([pred_argmax])[0]
+
+        axes[i].text(0, 0, f"Label: {target}, Pred: {pred_argmax}", horizontalalignment='center', verticalalignment='center', transform=axes[i].transAxes)
     #plt.show()
     if self.config['wandb']['enable']:
       plot = wandb.Image(plt)
