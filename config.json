@@ -1,7 +1,8 @@
 {
     "General":{
-        "DatasetType":"Static",
-        "Task":"Pose-modeling"
+        "DatasetType":"TITAN",
+        "Task":"Attribute-classification",
+        "Model_type":"MonoLoco"
     },
     "Dataset":{ 
         "DynamicDataset":{
@@ -59,14 +60,14 @@
         "optimizer":"adamw",
         "learning_rate":3e-4,
         "criterion":{
-            "type":"mae",
+            "type":"crossentropy",
             "enable_bt":true,
             "lmbda":5e-3
         },
         "batch_size":32,
-        "epochs":2,
+        "epochs":5,
         "save_checkpoint":true,
-        "n_samples_visualization":5,
+        "n_samples_visualization":3,
         "log_interval":10
     }
 }

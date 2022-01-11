@@ -8,10 +8,11 @@ import numpy as np
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
+from sklearn.metrics import f1_score
 
 from PosTER.Models.PosTER import PosTER
 from PosTER.Models.utils_models import PredictionHeads, BaseLine
-from PosTER.Agents.utils_agent import save_checkpoint, get_optimizer, get_criterion
+from PosTER.Agents.utils_agent import save_checkpoint, get_optimizer, get_criterion, get_model_for_fine_tuning
 from PosTER.Datasets.utils import convert_xyc_numpy
 from PosTER.Datasets.paint_keypoints import KeypointPainter, COCO_PERSON_SKELETON
 from PosTER.Datasets.titan_dataset import Person
@@ -30,12 +31,7 @@ class Trainer_FT(object):
       self.num_attribute_cat = len(attributes)
     else:
       raise "Not implemented"
-    self.heads = PredictionHeads(attributes)
-    self.poster_model = PosTER(config)
-    checkpoint_file = self.config['Model']['PosTER']['filename']
-    #load_checkpoint(checkpoint_file, self.poster_model)
-    #self.model = PosTER_FT(self.poster_model , self.heads)
-    self.model = BaseLine()
+    self.model = get_model_for_fine_tuning(config, attributes)
     self.optimizer = get_optimizer(self.model, config)
     self.criterion = get_criterion(config)
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -53,7 +49,7 @@ class Trainer_FT(object):
     avg_loss = 0
     log_interval = self.config['Training']['log_interval']
     intermediate_loss = 0
-    correct_preds = [0]*self.num_attribute_cat
+    #correct_preds = [0]*self.num_attribute_cat
     train_plot_samples = []
     val_plot_samples = []
     for batch_idx, input_batch in enumerate(loop):
@@ -106,10 +102,10 @@ class Trainer_FT(object):
         # For each element of the list, we predict an attribute among those that belong in this category
         #prediction_list = self.model(keypoints)
         prediction_list = [self.model(torch.flatten(keypoints, start_dim=1))]
-        loss = 0
+        avg_val_loss = 0
         for i, pred in enumerate(prediction_list):
           targets = attributes[:, i].detach().cpu().clone()
-          loss += self.criterion(pred, targets.to(self.device))
+          avg_val_loss += self.criterion(pred, targets.to(self.device))
           
           #Get argmax of predictions and check if they are correct
           pred_argmax_val = pred.data.max(1, keepdim=True)[1]
@@ -127,6 +123,10 @@ class Trainer_FT(object):
                         y_true=list_pr_labels_val[i], preds=None)})
       wandb.log({"conf_mat_argmax_{}".format(i) : wandb.plot.confusion_matrix(probs=None,
                         y_true=list_pr_labels_val[i], preds=list_pr_out_val_argmax[i])})
+      f1_scores = f1_score(list_pr_labels_val[i], list_pr_out_val_argmax[i], average=None)
+      for j in range(len(f1_scores)):
+        converted_label = Person.pred_list_to_str([j])[0]
+        wandb.log({"f1_score_{}_{}".format(i, converted_label) : f1_scores[j]})
           
     avg_val_loss = avg_val_loss/len(val_loader.dataset)
     avg_val_acc = [acc.long()/len(val_loader.dataset) for acc in correct_preds_val]
@@ -196,8 +196,8 @@ class Trainer_FT(object):
         pred_argmax = pred.data.max(1, keepdim=True)[1].item()
         target = training_sample[1].item()
 
-        target = Person.pred_list_to_str([target])
-        pred_argmax = Person.pred_list_to_str([pred_argmax])
+        target = Person.pred_list_to_str([target])[0]
+        pred_argmax = Person.pred_list_to_str([pred_argmax])[0]
 
         axes[i].text(0, 0, f"Label: {target}, Pred: {pred_argmax}", horizontalalignment='center', verticalalignment='center', transform=axes[i].transAxes)
     if self.config['wandb']['enable']:

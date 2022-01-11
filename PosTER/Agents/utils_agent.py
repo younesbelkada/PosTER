@@ -11,6 +11,10 @@ from PosTER.Datasets.pie_dataset import  StaticDataset, TransformsAgent, my_coll
 from PosTER.Datasets.titan_dataset import TITANDataset, TITANSimpleDataset
 from PosTER.Datasets.tcg_dataset import TCGDataset, TCGSingleFrameDataset, tcg_collate_fn, tcg_pad_seqs
 from PosTER.Datasets.utils import from_stats_to_weights, return_weights
+from PosTER.Models.PosTER import PosTER
+from PosTER.Models.PosTER_FT import PosTER_FT
+from PosTER.Models.utils_models import PredictionHeads
+from PosTER.Models.MonoLoco import MonoLoco
 
 def get_optimizer(model, config):
     """
@@ -56,6 +60,20 @@ def save_checkpoint(model, filename="my_checkpoint.pth.tar"):
     }
     torch.save(checkpoint, filename)
 
+def get_model_for_fine_tuning(config, attributes=None):
+    model_type = config['General']['Model_type']
+    if model_type == 'PosTER':
+        heads = PredictionHeads(attributes)
+        poster_model = PosTER(config)
+        checkpoint_file = config['Model']['PosTER']['filename']
+        load_checkpoint(checkpoint_file, poster_model)
+        model = PosTER_FT(poster_model, heads)
+    elif model_type == 'MonoLoco':
+        assert len(attributes) == 1
+        nb_classes = attributes[0]
+        model = MonoLoco(51, 0.2, nb_classes)
+    return model
+
 
 def load_checkpoint(checkpoint_file, model):
     print("=> Loading checkpoint")
@@ -87,11 +105,11 @@ def get_dataset(config):
         transforms = TransformsAgent(config).get_transforms((1980, 1980))
         train_simple_dataset = TITANSimpleDataset(train_data, merge_cls=True, transforms=transforms, inflate=0.9)
         
-        class_weight = [1/8, 1, 110, 10, 4]
-        samples_weight = []
-        for label in train_simple_dataset.all_labels:
-            samples_weight.append(class_weight[label[0]])
-        sampler = WeightedRandomSampler(samples_weight, len(samples_weight), replacement=True)
+        # class_weight = [1/8, 1, 110, 10, 4]
+        # samples_weight = []
+        # for label in train_simple_dataset.all_labels:
+        #     samples_weight.append(class_weight[label[0]])
+        # sampler = WeightedRandomSampler(samples_weight, len(samples_weight), replacement=True)
         
         #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
         #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
