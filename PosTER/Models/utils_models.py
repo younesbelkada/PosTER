@@ -32,6 +32,7 @@ class PredictionHeads(nn.Module):
 
 class BaseLine(nn.Module):
     def __init__(self):
+        super(BaseLine, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(51, 1028),
             nn.ReLU(True),
