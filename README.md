@@ -17,7 +17,7 @@ Implementation of PosTER - Pose Transformer Encoder Representation - for pedestr
 
 ## TO DO
 
-[ ] Relative coordinates and inflate => + data augmentation (flip and random translation / random scaling)
-[x] Import MonoLoco
-[x] Data augmentation
-[x] F1 score per class
+- [ ] Relative coordinates and inflate => + data augmentation (flip and random translation / random scaling)
+- [x] Import MonoLoco
+- [x] Data augmentation
+- [x] F1 score per class
