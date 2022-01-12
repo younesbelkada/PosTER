@@ -7,10 +7,13 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 
 from PosTER.loss import point_loss, pose_bt_loss, MultiTaskLossWrapper, pose_bt_loss_mae
-from PosTER.Datasets.pie_dataset import  StaticDataset, TransformsAgent, my_collate, DynamicDataset, StaticDataset
+
+from PosTER.Datasets.pie_dataset import  StaticDataset, my_collate, DynamicDataset, StaticDataset
 from PosTER.Datasets.titan_dataset import TITANDataset, TITANSimpleDataset
 from PosTER.Datasets.tcg_dataset import TCGDataset, TCGSingleFrameDataset, tcg_collate_fn, tcg_pad_seqs
 from PosTER.Datasets.utils import from_stats_to_weights, return_weights
+from PosTER.Datasets.transforms_agent import TransformsAgent
+
 from PosTER.Models.PosTER import PosTER
 from PosTER.Models.PosTER_FT import PosTER_FT
 from PosTER.Models.utils_models import PredictionHeads
@@ -104,7 +107,7 @@ def get_dataset(config):
         train_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='train', dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
         transforms = TransformsAgent(config).get_transforms((1980, 1980))
         train_simple_dataset = TITANSimpleDataset(train_data, merge_cls=True, transforms=transforms, inflate=0.9)
-        
+        #train_simple_dataset.all_poses = TITANSimpleDataset.convert_to_relative_coord(train_simple_dataset.all_poses)
         # class_weight = [1/8, 1, 110, 10, 4]
         # samples_weight = []
         # for label in train_simple_dataset.all_labels:
@@ -114,10 +117,12 @@ def get_dataset(config):
         #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
         #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
         train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
+        #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
 
         val_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='val',  dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
         val_simple_dataset = TITANSimpleDataset(val_data, merge_cls=True, transforms=transforms)
         val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
+        #val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
         #val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'])
     elif dataset_type.lower() == 'tcg':
         datapath, label_type = config['Dataset']['TCG']['dataset_dir'], config['Dataset']['TCG']['label_type']
@@ -129,3 +134,28 @@ def get_dataset(config):
         val_simple_dataset = TCGSingleFrameDataset(val_data)
         val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
     return train_dataloader, val_dataloader
+
+def get_test_dataset(config):
+    """
+        Get the test dataset according to the config file
+        :- config -: json config file that specifies the details about
+        which dataset to load
+    """
+    dataset_type = config['General']['DatasetType']
+    if dataset_type.lower() == 'static':
+        test_data = StaticDataset(config, 'test')
+        test_dataloader = DataLoader(test_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=False)
+    elif dataset_type.lower() == 'dynamic':
+        test_data = DynamicDataset(config, 'test')
+        test_dataloader = DataLoader(test_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=False)
+    elif dataset_type.lower() == 'titan':
+        test_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='test', dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
+        transforms = TransformsAgent(config).get_transforms((1980, 1980))
+        test_simple_dataset = TITANSimpleDataset(test_data, merge_cls=True, transforms=transforms, inflate=0.9)
+        test_dataloader = DataLoader(test_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate)
+    elif dataset_type.lower() == 'tcg':
+        datapath, label_type = config['Dataset']['TCG']['dataset_dir'], config['Dataset']['TCG']['label_type']
+        test_data = TCGDataset(datapath, label_type, eval_type="xs", eval_id=1, training=True)
+        test_simple_dataset = TCGSingleFrameDataset(test_data)
+        test_dataloader = DataLoader(test_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False)
+    return test_dataloader

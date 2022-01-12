@@ -8,7 +8,7 @@ import numpy as np
 
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, confusion_matrix
 
 from PosTER.Models.PosTER import PosTER
 from PosTER.Models.utils_models import PredictionHeads, BaseLine
@@ -55,7 +55,6 @@ class Trainer_FT(object):
     for batch_idx, input_batch in enumerate(loop):
       keypoints, attributes = input_batch
       keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
-      
       # Get a list of predictions corresponding to different attribute categories
       # For each element of the list, we predict an attribute among those that belong in this category
       #prediction_list = self.model(keypoints)
@@ -102,7 +101,6 @@ class Trainer_FT(object):
         # For each element of the list, we predict an attribute among those that belong in this category
         #prediction_list = self.model(keypoints)
         prediction_list = [self.model(torch.flatten(keypoints, start_dim=1))]
-        avg_val_loss = 0
         for i, pred in enumerate(prediction_list):
           targets = attributes[:, i].detach().cpu().clone()
           avg_val_loss += self.criterion(pred, targets.to(self.device))
@@ -124,9 +122,13 @@ class Trainer_FT(object):
       wandb.log({"conf_mat_argmax_{}".format(i) : wandb.plot.confusion_matrix(probs=None,
                         y_true=list_pr_labels_val[i], preds=list_pr_out_val_argmax[i])})
       f1_scores = f1_score(list_pr_labels_val[i], list_pr_out_val_argmax[i], average=None)
+      conf_matrix = confusion_matrix(list_pr_labels_val[i], list_pr_out_val_argmax[i])
+      accuracies = conf_matrix.diagonal()/conf_matrix.sum(axis=1)
       for j in range(len(f1_scores)):
         converted_label = Person.pred_list_to_str([j])[0]
         wandb.log({"f1_score_{}_{}".format(i, converted_label) : f1_scores[j]})
+        wandb.log({"accuracy_{}_{}".format(i, converted_label) : accuracies[j]})
+
           
     avg_val_loss = avg_val_loss/len(val_loader.dataset)
     avg_val_acc = [acc.long()/len(val_loader.dataset) for acc in correct_preds_val]

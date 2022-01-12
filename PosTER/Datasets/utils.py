@@ -80,7 +80,7 @@ def convert_keypoints(keypoints_array):
         output_processed_kps.append(Y[i])
         output_processed_kps.append(C[i])
     output_processed_kps = torch.tensor(output_processed_kps)
-    output_processed_kps[output_processed_kps.clone().detach().requires_grad_(True) < 0] = 0
+    #output_processed_kps[output_processed_kps.clone().detach().requires_grad_(True) < 0] = 0
     return output_processed_kps
 
 def convert_keypoints_batch(keypoints_array):
@@ -117,16 +117,20 @@ def convert_xyc(keypoints_tensor):
         i += 3
     return [X, Y, C]
 
-def convert_xyc_numpy(keypoints_tensor):
+def convert_xyc_numpy(keypoints):
     """
         Convert the kps tensor into X, Y, C format
+        Expects:
+            :- keypoints -: np array of size (51,)
     """
+    if len(keypoints.shape) == 2:
+        keypoints = np.ravel(keypoints)
     X, Y, C = [], [], []
     i = 0
-    while i < len(keypoints_tensor):
-        X.append(keypoints_tensor[i])
-        Y.append(keypoints_tensor[i+1])
-        C.append(keypoints_tensor[i+2])
+    while i < len(keypoints):
+        X.append(keypoints[i])
+        Y.append(keypoints[i+1])
+        C.append(keypoints[i+2])
         i += 3
     return [np.array(X), np.array(Y), np.array(C)]
 

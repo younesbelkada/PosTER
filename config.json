@@ -67,7 +67,7 @@
         "batch_size":32,
         "epochs":5,
         "save_checkpoint":true,
-        "n_samples_visualization":3,
+        "n_samples_visualization":5,
         "log_interval":10
     }
 }

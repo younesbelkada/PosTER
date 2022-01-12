@@ -377,13 +377,16 @@ class TITANSimpleDataset(Dataset):
     def __getitem__(self, index):
         if not self.use_img:
             pose = self.all_poses[index]
-            pose[:, :2] = pose[:, :2]/1920
+            pose[:, :2] = pose[:, :2]
             label = self.all_labels[index]
+            if self.transforms:
+                pose = self.transforms(pose)
             return pose, label
         else:
             pose = np.array(self.all_poses[index], dtype=np.float32) / 255
             label = self.all_labels[index]
-
+            if self.transforms:
+                pose = self.transforms(pose)
             return pose, label
     
     def __len__(self):
@@ -463,17 +466,21 @@ class TITANSimpleDataset(Dataset):
         Returns:
             converted_poses: size (batch_size, V+1, C)
         """
-        left_shoulder = all_poses[:, 5, :]
-        right_shoulder = all_poses[:, 6, :]
-        left_hip = all_poses[:, 11, :]
-        right_hip = all_poses[:, 12, :]
+        left_shoulder = all_poses[:, 5]
+        right_shoulder = all_poses[:, 6]
+        left_hip = all_poses[:, 11]
+        right_hip = all_poses[:, 12]
         top_mid = 0.5*(left_shoulder + right_shoulder)
         bottom_mid = 0.5*(left_hip + right_hip)
         mid = 0.5*(top_mid + bottom_mid)
         mid = np.expand_dims(mid, axis=1)
-        relative_coord = all_poses - mid 
-        converted_poses = np.concatenate((relative_coord, mid), axis=1)
-        
+        relative_coord = all_poses[:, :, :2] - mid[:, :, :2]
+
+        converted_poses = np.concatenate((relative_coord[:, :, :2], mid[:, :, :2]), axis=1)
+        #print(converted_poses.shape)
+        #converted_poses[:, :, np.newaxis] = np.concatenate((relative_coord[:, :, -1], mid[:, :, -1]), axis=1)
+        confidence_scores = np.expand_dims(np.concatenate((all_poses[:, :, -1], mid[:, :, -1]), axis=1), axis=-1)
+        converted_poses = np.append(converted_poses, confidence_scores, axis=-1)
         return converted_poses
     
     def process_one_frame(self, frame:Frame):
@@ -600,14 +607,23 @@ class TITANSimpleDataset(Dataset):
             
         
             
+    # @staticmethod
+    # def collate(list_of_pairs):
+    #     pose_list, label_list = [], []
+    #     for pose, label in list_of_pairs:
+    #         pose_list.append(pose)
+    #         label_list.append(label)
+    #     return torch.tensor(np.array(pose_list), dtype=torch.float32, requires_grad=True), torch.tensor(np.array(label_list), dtype=torch.long)
+    
     @staticmethod
     def collate(list_of_pairs):
         pose_list, label_list = [], []
         for pose, label in list_of_pairs:
-            pose_list.append(pose)
+            pose_list.append(pose.numpy())
             label_list.append(label)
         return torch.tensor(np.array(pose_list), dtype=torch.float32, requires_grad=True), torch.tensor(np.array(label_list), dtype=torch.long)
     
+
     def data_statistics(self):
         """ count the number of instances 
         """ 

@@ -2,7 +2,7 @@ import random
 import torch
 import numpy as np
 
-from PosTER.Datasets.utils import convert_xyc, convert_keypoints, convert_keypoints_batch
+from PosTER.Datasets.utils import convert_xyc, convert_keypoints, convert_keypoints_batch, convert_xyc_numpy
 
 class NormalizeKeypoints(object):
     """
@@ -14,7 +14,10 @@ class NormalizeKeypoints(object):
         assert isinstance((im_size), (tuple))
         self.n = max(im_size)
     def __call__(self, keypoints):
-        keypoints_xyc = convert_xyc(keypoints)
+        if torch.is_tensor(keypoints):
+            keypoints_xyc = convert_xyc(keypoints)
+        else:
+            keypoints_xyc = convert_xyc_numpy(keypoints)
         normalized_X = np.array(keypoints_xyc[0])/self.n
         normalized_Y = np.array(keypoints_xyc[1])/self.n
         C = np.array(keypoints_xyc[2])
@@ -54,19 +57,21 @@ class NormalizeKeypointsRelative(object):
     def __init__(self):
         pass
     def __call__(self, keypoints):
-
-        keypoints_x, keypoints_y, keypoints_c = convert_xyc(keypoints)
+        if torch.is_tensor(keypoints):
+            keypoints_x, keypoints_y, keypoints_c = convert_xyc(keypoints.unsqueeze(0))
+        else:
+            keypoints_x, keypoints_y, keypoints_c = convert_xyc_numpy(keypoints)
         keypoints_x, keypoints_y, keypoints_c = np.array(keypoints_x), np.array(keypoints_y), np.array(keypoints_c) 
         
-        left_shoulder_x = keypoints_x[5, :]
-        right_shoulder_x = keypoints_x[6, :]
-        left_shoulder_y = keypoints_y[5, :]
-        right_shoulder_y = keypoints_y[6, :]
+        left_shoulder_x = keypoints_x[5]
+        right_shoulder_x = keypoints_x[6]
+        left_shoulder_y = keypoints_y[5]
+        right_shoulder_y = keypoints_y[6]
 
-        left_hip_x = keypoints_x[11, :]
-        right_hip_x = keypoints_x[12, :]
-        left_hip_y = keypoints_y[11, :]
-        right_hip_y = keypoints_y[12, :]
+        left_hip_x = keypoints_x[11]
+        right_hip_x = keypoints_x[12]
+        left_hip_y = keypoints_y[11]
+        right_hip_y = keypoints_y[12]
 
         top_mid_x = 0.5*(left_shoulder_x + right_shoulder_x)
         bottom_mid_x = 0.5*(left_hip_x + right_hip_x)
@@ -77,9 +82,12 @@ class NormalizeKeypointsRelative(object):
         mid_y = 0.5*(top_mid_y+bottom_mid_y)
 
         relative_coord_x = keypoints_x - mid_x
-        relative_coord_y = keypoints_y - mid_y
+        relative_coord_y = keypoints_y  - mid_y
+        if len(relative_coord_x.shape) == 2:
+            return convert_keypoints_batch([relative_coord_x, relative_coord_y, keypoints_c])
+        else:
+            return convert_keypoints([relative_coord_x, relative_coord_y, keypoints_c]).unsqueeze(0)
 
-        return convert_keypoints_batch([relative_coord_x, relative_coord_y, keypoints_c])
         
 class RandomTranslation(object):
     """
@@ -104,7 +112,10 @@ class RandomTranslation(object):
         if random.uniform(0, 1) <= self.p:
             random_distance_x = random.uniform(-self.distance, self.distance)
             random_distance_y = random.uniform(-self.distance, self.distance)
-            X, Y, C = convert_xyc(keypoints)
+            if torch.is_tensor(keypoints):
+                X, Y, C = convert_xyc(keypoints.unsqueeze(0))
+            else:
+                X, Y, C = convert_xyc_numpy(keypoints)
             X, Y, C = np.array(X), np.array(Y), np.array(C)
             max_x, max_y = np.max(X), np.max(Y)
             min_x, min_y = np.min(X), np.min(Y)
@@ -114,7 +125,10 @@ class RandomTranslation(object):
                 random_distance_y = random.uniform(-self.distance, self.distance)
                 normalized_X = (X+random_distance_x)
                 normalized_Y = (Y+random_distance_y)
-                keypoints = convert_keypoints_batch([normalized_X, normalized_Y, C])
+                if len(normalized_X.shape) == 1:
+                    keypoints = convert_keypoints([normalized_X, normalized_Y, C])
+                else:
+                    keypoints = convert_keypoints_batch([normalized_X, normalized_Y, C])
         return keypoints
 
 class BodyParts(object):

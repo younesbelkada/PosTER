@@ -1,3 +1,10 @@
+*.json
+output_pifpaf_pie/*
+example_keypoints/*
+example_images/*
+*.png
+wandb/
+pkl_files/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
