@@ -1,4 +1,5 @@
 import wandb
+import os
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
@@ -26,6 +27,7 @@ class Trainer(object):
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if self.config['General']['Task'] == "Pose-modeling":
       self.mask_transform = RandomMask(self.config['Dataset']['Transforms']['mask']['N'])
+    self.path_model = os.path.join(self.config['General']['Model_path'], self.model.__class__.__name__+'.p')
     
   def train_one_epoch(self, train_loader, val_loader):
     """
@@ -143,7 +145,7 @@ class Trainer(object):
         #Save best model
         if (self.config['Training']['save_checkpoint'] and val_loss < best_loss):
             best_loss = val_loss
-            save_checkpoint(self.model, filename=self.config['Model']['PosTER']['filename'])
+            save_checkpoint(self.model, filename=self.path_model)
   def show_comparison(self, training_samples, validation_samples):
     """
       Runs an inference on some samples in the validation set and 

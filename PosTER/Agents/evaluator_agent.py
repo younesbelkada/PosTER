@@ -1,20 +1,12 @@
 import wandb
 import torch
 import torch.nn as nn
-import matplotlib as mpl
-mpl.use('TkAgg')
-import matplotlib.pyplot as plt
 import numpy as np 
 
-from torch.utils.data import DataLoader
 from tqdm import tqdm
 from sklearn.metrics import f1_score, confusion_matrix
 
-from PosTER.Models.PosTER import PosTER
-from PosTER.Models.utils_models import PredictionHeads, BaseLine
-from PosTER.Agents.utils_agent import save_checkpoint, get_optimizer, get_criterion, get_model_for_fine_tuning, load_checkpoint
-from PosTER.Datasets.utils import convert_xyc_numpy
-from PosTER.Datasets.paint_keypoints import KeypointPainter, COCO_PERSON_SKELETON
+from PosTER.Agents.utils_agent import get_model_for_fine_tuning, load_checkpoint
 from PosTER.Datasets.titan_dataset import Person
 
 class Evaluator(object):
@@ -30,8 +22,8 @@ class Evaluator(object):
         else:
             raise "Not implemented"
         self.model = get_model_for_fine_tuning(config, attributes)
-        checkpoint_file = config['Model']['PosTER']['filename'] # to change
-        #load_checkpoint(checkpoint_file, self.model)
+        checkpoint_file = os.path.join(self.config['General']['Model_path'], self.model.__class__.__name__+'.p')
+        load_checkpoint(checkpoint_file, self.model)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.model.to(self.device)
     

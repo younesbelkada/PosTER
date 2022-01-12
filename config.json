@@ -2,7 +2,8 @@
     "General":{
         "DatasetType":"TITAN",
         "Task":"Attribute-classification",
-        "Model_type":"MonoLoco"
+        "Model_type":"MonoLoco",
+        "Model_path":"Models"
     },
     "Dataset":{ 
         "DynamicDataset":{
@@ -65,7 +66,7 @@
             "lmbda":5e-3
         },
         "batch_size":32,
-        "epochs":5,
+        "epochs":15,
         "save_checkpoint":true,
         "n_samples_visualization":5,
         "log_interval":10
