@@ -28,7 +28,7 @@ class PosTER_FT(nn.Module):
 
     def forward(self, x):
       if len(x.shape) == 2:
-        x = torch.split(x, 3, dim=1)
+        x = torch.stack(torch.split(x, 3, dim=1), dim=1)
       cls_token, _ = self.pretrained_poster(x)
       out = self.fc(cls_token)
       return out
