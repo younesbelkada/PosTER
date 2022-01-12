@@ -1,7 +1,11 @@
 import wandb
+import os
 import torch
 import torch.nn as nn
 import numpy as np 
+
+import matplotlib as mpl
+mpl.use('TkAgg')
 
 from tqdm import tqdm
 from sklearn.metrics import f1_score, confusion_matrix
@@ -70,5 +74,5 @@ class Evaluator(object):
             accuracies = conf_matrix.diagonal()/conf_matrix.sum(axis=1)
         for j in range(len(f1_scores)):
             converted_label = Person.pred_list_to_str([j])[0]
-            wandb.log({"f1_score_test_{}_{}".format(i, converted_label) : f1_scores[j]})
-            wandb.log({"accuracy_test_{}_{}".format(i, converted_label) : accuracies[j]})
+            wandb.log({"f1_scores/f1_score_test_{}_{}".format(i, converted_label) : f1_scores[j]})
+            wandb.log({"accuracies/accuracy_test_{}_{}".format(i, converted_label) : accuracies[j]})
