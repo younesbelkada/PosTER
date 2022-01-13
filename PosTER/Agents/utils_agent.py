@@ -118,9 +118,10 @@ def get_dataset(config):
         #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate, sampler=sampler)
         train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
         #train_dataloader = DataLoader(train_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
+        transforms_val = TransformsAgent(config, test=True).get_transforms((1980, 1980))
 
         val_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='val',  dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
-        val_simple_dataset = TITANSimpleDataset(val_data, merge_cls=True, transforms=transforms)
+        val_simple_dataset = TITANSimpleDataset(val_data, merge_cls=True, transforms=transforms_val)
         val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True, collate_fn=TITANSimpleDataset.collate)
         #val_dataloader = DataLoader(val_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=True)
         #val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'])
@@ -150,8 +151,8 @@ def get_test_dataset(config):
         test_dataloader = DataLoader(test_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=False)
     elif dataset_type.lower() == 'titan':
         test_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='test', dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
-        transforms = TransformsAgent(config).get_transforms((1980, 1980))
-        test_simple_dataset = TITANSimpleDataset(test_data, merge_cls=True, transforms=transforms, inflate=0.9)
+        transforms = TransformsAgent(config, test=True).get_transforms((1980, 1980))
+        test_simple_dataset = TITANSimpleDataset(test_data, merge_cls=True, transforms=transforms)
         test_dataloader = DataLoader(test_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate)
     elif dataset_type.lower() == 'tcg':
         datapath, label_type = config['Dataset']['TCG']['dataset_dir'], config['Dataset']['TCG']['label_type']

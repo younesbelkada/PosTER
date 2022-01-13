@@ -26,6 +26,58 @@ class NormalizeKeypoints(object):
         else:
             return convert_keypoints([normalized_X, normalized_Y, C]).unsqueeze(0)
 
+class RandomFlip(object):
+    """
+        convert the key points into the flipped version of the keypoints
+        Invert the x coordinates only 
+                
+            COCO_KEYPOINTS = [
+                'nose',            # 0
+                'left_eye',        # 1
+                'right_eye',       # 2
+                'left_ear',        # 3
+                'right_ear',       # 4
+                'left_shoulder',   # 5
+                'right_shoulder',  # 6
+                'left_elbow',      # 7
+                'right_elbow',     # 8
+                'left_wrist',      # 9
+                'right_wrist',     # 10
+                'left_hip',        # 11
+                'right_hip',       # 12
+                'left_knee',       # 13
+                'right_knee',      # 14
+                'left_ankle',      # 15
+                'right_ankle',     # 16
+            ]
+
+            Args:
+                all_poses (np.ndarray): pose array, size (batch_size, V, C)
+
+            Returns:
+                converted_poses: size (batch_size, V+1, C)
+    """
+    def __init__(self, p_flip):
+        self.p_flip = p_flip
+        
+    def __call__(self, keypoints):
+        if torch.is_tensor(keypoints):
+            keypoints_x, keypoints_y, keypoints_c = convert_xyc(keypoints)
+        else:
+            keypoints_x, keypoints_y, keypoints_c = convert_xyc_numpy(keypoints)
+        if random.uniform(0, 1) <= self.p_flip:
+            keypoints_x, keypoints_y, keypoints_c = np.array(keypoints_x), np.array(keypoints_y), np.array(keypoints_c) 
+            
+            old_keypoints_x = keypoints_x.copy()
+            i = 1
+            while i < 16: # flip right and left
+                keypoints_x[i] = old_keypoints_x[i+1]
+                keypoints_x[i+1] = old_keypoints_x[i]
+                i += 2
+        return convert_keypoints([keypoints_x, keypoints_y, keypoints_c]).unsqueeze(0)
+
+    
+        
 class NormalizeKeypointsRelative(object):
     """
     convert the key points from absolute coordinate to center+relative coordinate
