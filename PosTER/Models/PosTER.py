@@ -22,7 +22,7 @@ class PosTER(nn.Module):
         nlayers = self.config['nlayers']  
         nhead = self.config['nhead']  
         dropout = self.config['dropout']
-        self.enable_bt = config["Training"]['enable_bt']
+        self.enable_bt = config["Training"]['criterion']['enable_bt']
         
         self.poster_embedding = PosTEREmbedding(dim_tokens, self.dim_embed, dropout=dropout) 
         encoder_layers = nn.TransformerEncoderLayer(self.dim_embed, nhead, dim_ff, dropout) 
