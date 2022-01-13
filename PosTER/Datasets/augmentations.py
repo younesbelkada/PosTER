@@ -61,7 +61,7 @@ class NormalizeKeypointsRelative(object):
         pass
     def __call__(self, keypoints):
         if torch.is_tensor(keypoints):
-            keypoints_x, keypoints_y, keypoints_c = convert_xyc(keypoints.unsqueeze(0))
+            keypoints_x, keypoints_y, keypoints_c = convert_xyc(keypoints)
         else:
             keypoints_x, keypoints_y, keypoints_c = convert_xyc_numpy(keypoints)
         keypoints_x, keypoints_y, keypoints_c = np.array(keypoints_x), np.array(keypoints_y), np.array(keypoints_c) 
@@ -86,6 +86,14 @@ class NormalizeKeypointsRelative(object):
 
         relative_coord_x = keypoints_x - mid_x
         relative_coord_y = keypoints_y  - mid_y
+        
+        w_person = abs(np.max(keypoints_x) - np.min(keypoints_x))
+        h_person = abs(np.max(keypoints_y) - np.min(keypoints_y))
+
+        relative_coord_x = relative_coord_x/max(w_person, h_person)
+        relative_coord_y = relative_coord_y/max(w_person, h_person)
+
+
         if len(relative_coord_x.shape) == 2:
             return convert_keypoints_batch([relative_coord_x, relative_coord_y, keypoints_c])
         else:
@@ -116,7 +124,7 @@ class RandomTranslation(object):
             random_distance_x = random.uniform(-self.distance, self.distance)
             random_distance_y = random.uniform(-self.distance, self.distance)
             if torch.is_tensor(keypoints):
-                X, Y, C = convert_xyc(keypoints.unsqueeze(0))
+                X, Y, C = convert_xyc(keypoints)
             else:
                 X, Y, C = convert_xyc_numpy(keypoints)
             X, Y, C = np.array(X), np.array(Y), np.array(C)
