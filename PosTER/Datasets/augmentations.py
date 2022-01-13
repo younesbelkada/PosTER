@@ -222,9 +222,11 @@ class RandomMask(object):
         index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
         masked_keypoints = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
         #masked_keypoints[masked_keypoints == [0, 0, 0]] = torch.FloatTensor([self.mask_value, self.mask_value, self.mask_value])
+        masked_keypoints[abs(masked_keypoints) < 1e-8] = self.mask_value
 
         nb_masks = torch.randint(1, self.N, (1,)).item()
         index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
         masked_keypoints_for_bt = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
-        
+        masked_keypoints_for_bt[abs(masked_keypoints_for_bt) < 1e-8] = self.mask_value
+
         return masked_keypoints_for_bt, masked_keypoints, full_keypoints
