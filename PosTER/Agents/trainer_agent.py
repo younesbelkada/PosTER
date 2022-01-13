@@ -26,8 +26,9 @@ class Trainer(object):
     self.criterion = get_criterion(config)
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if self.config['General']['Task'] == "Pose-modeling":
-      self.mask_transform = RandomMask(self.config['Dataset']['Transforms']['mask']['N'])
+      self.mask_transform = RandomMask(self.config['Dataset']['Transforms']['mask']['N'], self.config['Dataset']['Transforms']['mask']['value'])
     self.path_model = os.path.join(self.config['General']['Model_path'], self.model.__class__.__name__+'.p')
+    self.mask_value = config['Dataset']['Transforms']['mask']['value']
     
   def train_one_epoch(self, train_loader, val_loader):
     """
@@ -46,12 +47,13 @@ class Trainer(object):
     training_samples_to_plot = []
     for batch_idx, input_batch in enumerate(loop):
       if self.config['General']['Task'] == "Pose-modeling":
+        if self.config['General']['DatasetType'] == 'TITAN':
+          input_batch = input_batch[0].squeeze(-1)
         masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch)
         masked_keypoints_for_bt, masked_keypoints, full_keypoints = masked_keypoints_for_bt.to(self.device), masked_keypoints.to(self.device), full_keypoints.to(self.device)
         full_keypoints = torch.flatten(full_keypoints, start_dim=1)
         if len(training_samples_to_plot) < self.config['Training']['n_samples_visualization']:
           training_samples_to_plot.append((torch.flatten(masked_keypoints.detach().cpu(), start_dim=1)[0, :], full_keypoints[0, :].detach().cpu(), masked_keypoints[0, :].detach().cpu()))
-        
         cls_tokens_1, predicted_keypoints = self.model(masked_keypoints)
         cls_tokens_2, _ = self.model(masked_keypoints_for_bt)
         #cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
@@ -92,6 +94,8 @@ class Trainer(object):
       self.model.eval()
       for batch_idx, input_batch in enumerate(tqdm(val_loader)):
         if self.config['General']['Task'] == "Pose-modeling":
+          if self.config['General']['DatasetType'] == 'TITAN':
+            input_batch = input_batch[0].squeeze(-1)
           masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch)
           masked_keypoints_for_bt, masked_keypoints, full_keypoints = masked_keypoints_for_bt.to(self.device), masked_keypoints.to(self.device), full_keypoints.to(self.device)
           full_keypoints = torch.flatten(full_keypoints, start_dim=1)
@@ -169,7 +173,7 @@ class Trainer(object):
         masked_x, masked_y, _ = convert_xyc_numpy(training_sample[0].numpy())
         axes[0, i].invert_yaxis()
         axes[0, i].axis('off')
-        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
+        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True, mask_value=self.mask_value)
       
         _ , predicted_keypoints = self.model(training_sample[-1].to(self.device).unsqueeze(0))
         predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())
@@ -197,7 +201,7 @@ class Trainer(object):
         masked_x, masked_y, _ = convert_xyc_numpy(val_sample[0].numpy())
         axes[0, i].invert_yaxis()
         axes[0, i].axis('off')
-        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True)
+        kps_painter._draw_skeleton(axes[0, i], x, y, v, skeleton=COCO_PERSON_SKELETON, masked_x=masked_x, masked_y=masked_y, mask_joints=True, mask_value=self.mask_value)
       
         _, predicted_keypoints = self.model(val_sample[-1].to(self.device).unsqueeze(0))
         predicted_x, predicted_y, predicted_v = convert_xyc_numpy(predicted_keypoints.squeeze(0).detach().cpu().numpy())

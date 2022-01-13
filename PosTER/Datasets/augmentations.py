@@ -210,8 +210,9 @@ class RandomMask(object):
     :- N -: Number of body parts to mask (at most)
     Credits to clement.apavou and arthur.zucker for their help
     """
-    def __init__(self, N):
+    def __init__(self, N, mask_value):
         self.N = N 
+        self.mask_value = mask_value
     def __call__(self, keypoints):
         full_keypoints = keypoints.clone()
         nb_body_parts = keypoints.shape[1]
@@ -220,8 +221,10 @@ class RandomMask(object):
 
         index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
         masked_keypoints = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
+        #masked_keypoints[masked_keypoints == [0, 0, 0]] = torch.FloatTensor([self.mask_value, self.mask_value, self.mask_value])
 
         nb_masks = torch.randint(1, self.N, (1,)).item()
         index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
         masked_keypoints_for_bt = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
+        
         return masked_keypoints_for_bt, masked_keypoints, full_keypoints

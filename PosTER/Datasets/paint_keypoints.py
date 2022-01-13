@@ -90,7 +90,7 @@ class KeypointPainter(Configurable):
             else:
                 self.marker_size = max(1, int(self.line_width * 0.5))
 
-    def _draw_skeleton(self, ax, x, y, v, *, skeleton, masked_x=None, masked_y=None, mask_joints=False, skeleton_mask=None, color=None, alpha=1.0, **kwargs):
+    def _draw_skeleton(self, ax, x, y, v, *, skeleton, masked_x=None, masked_y=None, mask_joints=False, skeleton_mask=None, color=None, alpha=1.0, mask_value=0.0, **kwargs):
         if not np.any(v > 0):
             return
 
@@ -149,7 +149,7 @@ class KeypointPainter(Configurable):
         # show masked joints
         if mask_joints:
             for i in np.arange(.1,1.01,.1):
-                ax.scatter(x[masked_x == 0.0], y[masked_y == 0.0], s=(50*i*(1*.9+.1))**2, marker='.', color=(0,0,0,.5/i/10), zorder=3)
+                ax.scatter(x[masked_x == mask_value], y[masked_y == mask_value], s=(50*i*(1*.9+.1))**2, marker='.', color=(0,0,0,.5/i/10), zorder=3)
             #ax.scatter(
             #    x[masked_x == 0.0], y[masked_y == 0.0], s=(self.marker_size*22)**2, marker='.',
             #    color='black', alpha=1, zorder=3

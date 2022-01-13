@@ -1,8 +1,8 @@
 {
     "General":{
         "DatasetType":"TITAN",
-        "Task":"Attribute-classification",
-        "Model_type":"MonoLoco",
+        "Task":"Pose-modeling",
+        "Model_type":"PosTER",
         "Model_path":"Models"
     },
     "Dataset":{ 
@@ -37,6 +37,7 @@
                 "p":0.5
             },
             "mask":{
+                "value":0,
                 "N":3
             }
         },
@@ -65,7 +66,7 @@
         "optimizer":"adamw",
         "learning_rate":3e-4,
         "criterion":{
-            "type":"crossentropy",
+            "type":"mae",
             "enable_bt":true,
             "lmbda":5e-3,
             "beta" : 0.1
