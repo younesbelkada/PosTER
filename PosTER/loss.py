@@ -36,16 +36,16 @@ def bt_loss(z1, z2, lmbda=5e-3, beta = 0.1):
 
   return beta * loss
 
-def pose_bt_loss(masked_kps, full_kps, z1, z2, lmbda=5e-3, enable_bt=True):
+def pose_bt_loss(masked_kps, full_kps, z1, z2, lmbda=5e-3, beta= 0.01, enable_bt=True):
     loss = nn.MSELoss()(masked_kps, full_kps)
     if enable_bt:
-        return loss, bt_loss(z1, z2, lmbda)
+        return loss, bt_loss(z1, z2, lmbda, beta)
     return loss, None
 
-def pose_bt_loss_mae(masked_kps, full_kps, z1, z2, lmbda=5e-3, enable_bt=True):
+def pose_bt_loss_mae(masked_kps, full_kps, z1, z2, lmbda=5e-3, beta= 0.01, enable_bt=True):
     loss = nn.L1Loss()(masked_kps, full_kps)
     if enable_bt:
-        return loss, bt_loss(z1, z2, lmbda)
+        return loss, bt_loss(z1, z2, lmbda, beta)
     return loss, None
 
 
