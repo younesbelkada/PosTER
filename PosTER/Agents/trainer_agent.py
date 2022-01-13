@@ -56,7 +56,9 @@ class Trainer(object):
         cls_tokens_2, _ = self.model(masked_keypoints_for_bt)
         #cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
         
-        dist_loss, bt_loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_1, cls_tokens_2, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+        dist_loss, bt_loss = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_1, cls_tokens_2, 
+                                            lmbda=self.config['Training']['criterion']['lmbda'], beta=self.config['Training']['criterion']['beta'],
+                                            enable_bt=self.config['Training']['criterion']['enable_bt'])
         loss = dist_loss
         if bt_loss:
           loss = (dist_loss + bt_loss)/2
@@ -98,7 +100,9 @@ class Trainer(object):
           cls_tokens_1, predicted_keypoints = self.model(masked_keypoints)
           cls_tokens_2, _ = self.model(masked_keypoints_for_bt)
           #cls_tokens_full, _ = self.model(BodyParts()(full_keypoints))
-          dist_loss_val, bt_loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_1, cls_tokens_2, lmbda=self.config['Training']['criterion']['lmbda'], enable_bt=self.config['Training']['criterion']['enable_bt'])
+          dist_loss_val, bt_loss_val = self.criterion(predicted_keypoints, full_keypoints, cls_tokens_1, cls_tokens_2, 
+                                                      lmbda=self.config['Training']['criterion']['lmbda'], beta=self.config['Training']['criterion']['beta'],
+                                                      enable_bt=self.config['Training']['criterion']['enable_bt'])
           val_loss = dist_loss_val
           if bt_loss_val:
             val_loss = (dist_loss_val + bt_loss_val)/2

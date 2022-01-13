@@ -15,7 +15,7 @@ def point_loss(tensor1, tensor2, eps=1e-15):
     return -torch.log(min_tensors/max_tensors).mean()
 
 
-def bt_loss(z1, z2, lmbda=5e-3):
+def bt_loss(z1, z2, lmbda=5e-3, beta = 0.1):
     
   #Normalize the projector's output across the batch
   norm_z1 = (z1 - z1.mean(0))/ z1.std(0)
@@ -34,7 +34,7 @@ def bt_loss(z1, z2, lmbda=5e-3):
   redundancy_loss = (cc_M.flatten() ** 2 ).sum()
   loss = invariance_loss + lmbda * redundancy_loss
 
-  return loss
+  return beta * loss
 
 def pose_bt_loss(masked_kps, full_kps, z1, z2, lmbda=5e-3, enable_bt=True):
     loss = nn.MSELoss()(masked_kps, full_kps)

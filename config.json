@@ -63,7 +63,8 @@
         "criterion":{
             "type":"crossentropy",
             "enable_bt":true,
-            "lmbda":5e-3
+            "lmbda":5e-3,
+            "beta" : 0.1
         },
         "batch_size":32,
         "epochs":15,
