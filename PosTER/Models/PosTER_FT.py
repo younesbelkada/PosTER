@@ -10,6 +10,8 @@ class PosTER_FT(nn.Module):
         """
         super(PosTER_FT, self).__init__()
         self.pretrained_poster = pretrained_poster
+        #self.pretrained_poster.requires_grad_(False)
+        '''
         self.fc = nn.Sequential(
             nn.Linear(pretrained_poster.token_prediction_layer.in_features, 1024),
             nn.BatchNorm1d(1024),
@@ -21,11 +23,13 @@ class PosTER_FT(nn.Module):
             nn.BatchNorm1d(1024),
             nn.ReLU(),
         )
-
-        self.prediction_heads = prediction_heads
+        '''
+        self.fc = nn.Linear(128, 5)
 
     def forward(self, x):
-        cls_token, _ = self.pretrained_poster(x)
-        cls_token = self.fc(cls_token)
-        return self.prediction_heads(cls_token)
+      if len(x.shape) == 2:
+        x = torch.stack(torch.split(x, 3, dim=1), dim=1)
+      cls_token, _ = self.pretrained_poster(x)
+      out = self.fc(cls_token)
+      return out
 

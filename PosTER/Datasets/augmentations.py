@@ -15,7 +15,7 @@ class NormalizeKeypoints(object):
         self.n = max(im_size)
     def __call__(self, keypoints):
         if torch.is_tensor(keypoints):
-            keypoints_xyc = convert_xyc(keypoints)
+            keypoints_xyc = convert_xyc(keypoints.unsqueeze(0))
         else:
             keypoints_xyc = convert_xyc_numpy(keypoints)
         normalized_X = np.array(keypoints_xyc[0])/self.n
@@ -149,7 +149,7 @@ class BodyParts(object):
     def __init__(self):
         pass 
     def __call__(self, keypoints):
-        return torch.stack(torch.split(keypoints, 3, dim=1), dim=1)
+        return torch.stack(torch.split(keypoints, 3, dim=1), dim=1).squeeze(0)
 
 class RandomMask(object):
     """
