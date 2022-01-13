@@ -12,6 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 
 from PosTER.Datasets.predictor import PifPafPredictor
+from PosTER.Datasets.transforms_agent import TransformsAgent
 from PosTER.Datasets.utils import preprocess_pifpaf, prepare_pif_kps, convert_keypoints, convert_keypoints_json_input, get_input_path
 from PosTER.Datasets.augmentations import NormalizeKeypoints, BodyParts, RandomTranslation, RandomMask, NormalizeKeypointsRelative
 

@@ -32,6 +32,10 @@
                 "p":0.5,
                 "distance":50
             },
+            "randomflip":{
+                "enable":true,
+                "p":0.5
+            },
             "mask":{
                 "N":3
             }
