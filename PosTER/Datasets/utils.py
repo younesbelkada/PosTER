@@ -108,6 +108,8 @@ def convert_xyc(keypoints_tensor):
     """
         Convert the kps tensor into X, Y, C format
     """
+    if len(keypoints_tensor.shape) == 1:
+        keypoints_tensor = keypoints_tensor.unsqueeze(0)
     X, Y, C = [], [], []
     i = 0
     while i < len(keypoints_tensor[0, :]):
