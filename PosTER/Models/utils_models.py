@@ -7,10 +7,10 @@ class RegressionHead(nn.Module):
         self.fc = nn.Linear(
             51, 51
         )
-        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
     def forward(self, x):
         x = torch.flatten(x, start_dim=1)
-        return self.sigmoid(self.fc(x))
+        return self.tanh(self.fc(x))
 
 class PredictionHeads(nn.Module):
     def __init__(self, list_attributes):
