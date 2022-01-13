@@ -24,12 +24,16 @@ class PosTER_FT(nn.Module):
             nn.ReLU(),
         )
         '''
-        self.fc = nn.Linear(128, 5)
+        
+        self.fc = nn.Linear(self.pretrained_poster.dim_embed, 5)
 
     def forward(self, x):
-      if len(x.shape) == 2:
-        x = torch.stack(torch.split(x, 3, dim=1), dim=1)
-      cls_token, _ = self.pretrained_poster(x)
-      out = self.fc(cls_token)
-      return out
+        if len(x.shape) == 2:
+            x = torch.stack(torch.split(x, 3, dim=1), dim=1)
+    
+        embed = self.pretrained_poster.poster_embedding(x)
+        output_embed = self.pretrained_poster.transformer_encoder(embed)
+        cls_token = output_embed[:,0,:]
+        out = self.fc(cls_token)
+        return out
 
