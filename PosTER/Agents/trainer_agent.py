@@ -11,7 +11,7 @@ from tqdm import tqdm
 from PosTER.Models.PosTER import PosTER
 from PosTER.Agents.utils_agent import save_checkpoint, get_optimizer, get_criterion
 from PosTER.Datasets.utils import convert_xyc_numpy
-from PosTER.Datasets.augmentations import RandomMask, BodyParts
+from PosTER.Datasets.augmentations import RandomMask, BodyParts, RandomFlip
 from PosTER.Datasets.paint_keypoints import KeypointPainter, COCO_PERSON_SKELETON
 
 class Trainer(object):
@@ -49,7 +49,9 @@ class Trainer(object):
       if self.config['General']['Task'] == "Pose-modeling":
         if self.config['General']['DatasetType'] == 'TITAN':
           input_batch = input_batch[0].squeeze(-1)
-        masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch)
+          flipped_input_batch = RandomFlip(p_flip=0.8)(torch.flatten(input_batch, start_dim=1))
+          flipped_input_batch = BodyParts()(flipped_input_batch)
+        masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch, flipped_input_batch)
         masked_keypoints_for_bt, masked_keypoints, full_keypoints = masked_keypoints_for_bt.to(self.device), masked_keypoints.to(self.device), full_keypoints.to(self.device)
         full_keypoints = torch.flatten(full_keypoints, start_dim=1)
         if len(training_samples_to_plot) < self.config['Training']['n_samples_visualization']:
@@ -96,7 +98,9 @@ class Trainer(object):
         if self.config['General']['Task'] == "Pose-modeling":
           if self.config['General']['DatasetType'] == 'TITAN':
             input_batch = input_batch[0].squeeze(-1)
-          masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch)
+            flipped_input_batch = RandomFlip(p_flip=0.8)(torch.flatten(input_batch, start_dim=1))
+            flipped_input_batch = BodyParts()(flipped_input_batch)
+          masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch, flipped_input_batch)
           masked_keypoints_for_bt, masked_keypoints, full_keypoints = masked_keypoints_for_bt.to(self.device), masked_keypoints.to(self.device), full_keypoints.to(self.device)
           full_keypoints = torch.flatten(full_keypoints, start_dim=1)
           if len(validation_samples_to_plot) < self.config['Training']['n_samples_visualization']:

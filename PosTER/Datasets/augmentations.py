@@ -70,10 +70,16 @@ class RandomFlip(object):
             
             old_keypoints_x = keypoints_x.copy()
             i = 1
-            while i < 16: # flip right and left
-                keypoints_x[i] = old_keypoints_x[i+1]
-                keypoints_x[i+1] = old_keypoints_x[i]
-                i += 2
+
+
+            if len(keypoints_x.shape) == 2:
+                while i < 16: # flip right and left
+                    keypoints_x[i, :] = old_keypoints_x[i+1, :]
+                    keypoints_x[i+1, :] = old_keypoints_x[i, :]
+                    i += 2
+            else:
+                raise NotImplementedError
+            
         return convert_keypoints([keypoints_x, keypoints_y, keypoints_c]).unsqueeze(0)
 
     
@@ -203,6 +209,8 @@ class BodyParts(object):
     def __call__(self, keypoints):
         return torch.stack(torch.split(keypoints, 3, dim=1), dim=1).squeeze(0)
 
+
+
 class RandomMask(object):
     """
     Randomly mask the N tokens from the input. The method is based on 
@@ -213,7 +221,8 @@ class RandomMask(object):
     def __init__(self, N, mask_value):
         self.N = N 
         self.mask_value = mask_value
-    def __call__(self, keypoints):
+    def __call__(self, keypoints, flipped_keypoints):
+        flipped_keypoints = flipped_keypoints.permute(2, 0, 1)
         full_keypoints = keypoints.clone()
         nb_body_parts = keypoints.shape[1]
         
@@ -225,8 +234,8 @@ class RandomMask(object):
         masked_keypoints[abs(masked_keypoints) < 1e-8] = self.mask_value
 
         nb_masks = torch.randint(1, self.N, (1,)).item()
-        index_to_mask = torch.ones((keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
-        masked_keypoints_for_bt = keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
+        index_to_mask = torch.ones((flipped_keypoints.shape[0], nb_body_parts))*(1-(nb_masks/nb_body_parts))
+        masked_keypoints_for_bt = flipped_keypoints*(torch.bernoulli(index_to_mask).unsqueeze(-1))
         masked_keypoints_for_bt[abs(masked_keypoints_for_bt) < 1e-8] = self.mask_value
 
         return masked_keypoints_for_bt, masked_keypoints, full_keypoints
