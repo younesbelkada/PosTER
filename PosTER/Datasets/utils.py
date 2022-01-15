@@ -79,7 +79,7 @@ def convert_keypoints(keypoints_array):
         output_processed_kps.append(X[i])
         output_processed_kps.append(Y[i])
         output_processed_kps.append(C[i])
-    output_processed_kps = torch.tensor(output_processed_kps)
+    output_processed_kps = torch.tensor(np.array(output_processed_kps))
     #output_processed_kps[output_processed_kps.clone().detach().requires_grad_(True) < 0] = 0
     return output_processed_kps
 
@@ -93,7 +93,7 @@ def convert_keypoints_batch(keypoints_array):
         output_processed_kps.append(X[i, :].tolist())
         output_processed_kps.append(Y[i, :].tolist())
         output_processed_kps.append(C[i, :].tolist())
-    output_processed_kps = torch.tensor(output_processed_kps)
+    output_processed_kps = torch.tensor(np.array(output_processed_kps))
     #output_processed_kps[output_processed_kps.clone().detach().requires_grad_(True) < 0] = 0
     return torch.transpose(output_processed_kps, 0, 1)
     #return output_processed_kps
