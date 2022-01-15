@@ -27,6 +27,13 @@ class PosTER_FT(nn.Module):
         
         self.fc = nn.Linear(self.pretrained_poster.dim_embed, 5)
         self.classifier = nn.Linear(self.pretrained_poster.dim_embed*18, 5)
+        self.seq = nn.Sequential(
+            nn.Linear(self.pretrained_poster.dim_embed*18, 512),
+            nn.BatchNorm1d(512),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(512, 5),
+        )
 
     def forward(self, x):
         if len(x.shape) == 2:
@@ -38,6 +45,8 @@ class PosTER_FT(nn.Module):
         
         out =  torch.flatten(output_embed, start_dim=1)
         #out = self.fc(cls_token)
-        out = self.classifier(out)
+        #out = self.classifier(out)
+        out = self.seq(out)
         return out
+
 
