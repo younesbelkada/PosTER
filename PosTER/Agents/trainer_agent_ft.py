@@ -151,7 +151,7 @@ class Trainer_FT(object):
 
     if self.config['wandb']['enable']:
       wandb_entity = self.config['wandb']['entity']
-      wandb.init(project=self.config['wandb']['project_name'], entity=wandb_entity)
+      wandb.init(project=self.config['wandb']['project_name'], entity=wandb_entity, config=self.config)
       wandb.watch(self.model, self.criterion, log="all", log_freq=10)
 
     best_loss = float('inf')
