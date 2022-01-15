@@ -10,20 +10,6 @@ class PosTER_FT(nn.Module):
         """
         super(PosTER_FT, self).__init__()
         self.pretrained_poster = pretrained_poster
-        #self.pretrained_poster.requires_grad_(False)
-        '''
-        self.fc = nn.Sequential(
-            nn.Linear(pretrained_poster.token_prediction_layer.in_features, 1024),
-            nn.BatchNorm1d(1024),
-            nn.ReLU(),
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
-            nn.ReLU(),
-            nn.Linear(1024, 1024),
-            nn.BatchNorm1d(1024),
-            nn.ReLU(),
-        )
-        '''
         
         self.fc = nn.Linear(self.pretrained_poster.dim_embed, 5)
 

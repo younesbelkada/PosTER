@@ -82,7 +82,6 @@ class RandomFlip(object):
             
         return convert_keypoints([keypoints_x, keypoints_y, keypoints_c]).unsqueeze(0)
 
-    
         
 class NormalizeKeypointsRelative(object):
     """

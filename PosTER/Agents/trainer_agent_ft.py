@@ -28,9 +28,13 @@ class Trainer_FT(object):
   def __init__(self, config):
     self.config = config
     self.num_attribute_cat = 0
+    self.use_merge = config['Dataset']['TITAN']['use_merge']
     if config['General']['DatasetType'] == 'TITAN':
       #attributes = [4, 7, 9, 13, 4]
-      attributes = [5]
+      if self.use_merge:
+        attributes = [5]
+      else:
+        attributes = [4]
       self.num_attribute_cat = len(attributes)
     else:
       raise "Not implemented"
@@ -64,6 +68,8 @@ class Trainer_FT(object):
       #prediction_list = self.model(keypoints)
       if len(train_plot_samples) < self.config['Training']['n_samples_visualization']:
         train_plot_samples.append([torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :].detach().cpu().numpy(), attributes[0].detach().cpu().numpy()])
+      else:
+        break
       pred = self.model(torch.flatten(keypoints, start_dim=1))
       loss = 0
       targets = attributes.detach().cpu().clone().squeeze(1)
@@ -100,6 +106,8 @@ class Trainer_FT(object):
         keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
         if len(val_plot_samples) < self.config['Training']['n_samples_visualization']:
           val_plot_samples.append([torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :].detach().cpu().numpy(), attributes[0].detach().cpu().numpy()])
+        else:
+          break
         # Get a list of predictions corresponding to different attribute categories
         # For each element of the list, we predict an attribute among those that belong in this category
         #prediction_list = self.model(keypoints)
@@ -128,7 +136,7 @@ class Trainer_FT(object):
       conf_matrix = confusion_matrix(list_pr_labels_val[i], list_pr_out_val_argmax[i])
       accuracies = conf_matrix.diagonal()/conf_matrix.sum(axis=1)
       for j in range(len(f1_scores)):
-        converted_label = Person.pred_list_to_str([j])[0]
+        converted_label = Person.pred_list_to_str([j], communicative=not self.use_merge)[0]
         wandb.log({"f1_scores/f1_score_{}_{}".format(i, converted_label) : f1_scores[j]})
         wandb.log({"accuracies/accuracy_{}_{}".format(i, converted_label) : accuracies[j]})
 
@@ -198,10 +206,10 @@ class Trainer_FT(object):
         pred_argmax = pred.data.max(1, keepdim=True)[1].item()
         target = training_sample[1].item()
 
-        target = Person.pred_list_to_str([target])[0]
-        pred_argmax = Person.pred_list_to_str([pred_argmax])[0]
+        target = Person.pred_list_to_str([target], communicative=not self.use_merge)[0]
+        pred_argmax = Person.pred_list_to_str([pred_argmax], communicative=not self.use_merge)[0]
 
-        axes[i].text(0, 0, f"Label: {target}, Pred: {pred_argmax}", horizontalalignment='center', verticalalignment='center', transform=axes[i].transAxes)
+        axes[i].text(0, 0, f"Label: {target}, Pred: {pred_argmax}", horizontalalignment='center', verticalalignment='center', transform=axes[i].transAxes, size='x-small')
     if self.config['wandb']['enable']:
       plot = wandb.Image(plt)
       wandb.log(
@@ -228,8 +236,8 @@ class Trainer_FT(object):
         target = validation_sample[1].item()
         #plt.text(i*10,y, f"Label: {target}, Pred: {pred_argmax}")
 
-        target = Person.pred_list_to_str([target])[0]
-        pred_argmax = Person.pred_list_to_str([pred_argmax])[0]
+        target = Person.pred_list_to_str([target], communicative=not self.use_merge)[0]
+        pred_argmax = Person.pred_list_to_str([pred_argmax], communicative=not self.use_merge)[0]
 
         axes[i].text(0, 0, f"Label: {target}, Pred: {pred_argmax}", horizontalalignment='center', verticalalignment='center', transform=axes[i].transAxes, size='x-small')
     #plt.show()

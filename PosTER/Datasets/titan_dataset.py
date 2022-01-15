@@ -104,12 +104,15 @@ class Person(object):
         return simplified
 
     @classmethod
-    def pred_list_to_str(cls, list_of_action):
+    def pred_list_to_str(cls, list_of_action, communicative=False):
         """ convert a list of actions like [0, 0, ...] into list of strings ["action1", "action2", ...]
         """
         action_str = [] 
         if len(list_of_action) == 1:
-            mappings = [cls.valid_action_dict]
+            if communicative:
+                mappings = [cls.communicative_dict]
+            else:
+                mappings = [cls.valid_action_dict]
         elif (list_of_action) == 5:
             mappings = [cls.communicative_dict, 
                         cls.complex_context_dict, 
@@ -369,10 +372,17 @@ class TITANSimpleDataset(Dataset):
         else:
             self.n_cls = [len(getattr(Person, category + "_dict")) for category in Person.action_category]
             
-        if self.split=="train" and isinstance(self.inflate, float): # only inflate samples in training
+        if self.split=="train" and isinstance(self.inflate, float) and self.merge_cls: # only inflate samples in training
             self.all_poses, self.all_labels = self.inflate_minority_classes()
             print("after inflating the minority classes")
             self.print_statistics()
+        elif self.split=="train" and isinstance(self.inflate, float):
+            self.all_poses, self.all_labels = self.inflate_minority_classes_no_merge()
+            print("after inflating the minority classes")
+            self.print_statistics()
+        elif (self.split == "val" or self.split == "test") and not self.merge_cls:
+            self.all_poses, self.all_labels = self.all_poses, self.all_labels[:, 0]
+            self.all_labels = self.all_labels.reshape(-1, 1) 
 
     def __getitem__(self, index):
         if not self.use_img:
@@ -571,6 +581,38 @@ class TITANSimpleDataset(Dataset):
         
         return pose_array, label_array
             
+    def inflate_minority_classes_no_merge(self):
+        # only for communicative dict
+        
+        print("duplicating the minority class to approximately {:.1f}% of the majority class".format(self.inflate*100))
+        
+        original_poses, original_labels = self.all_poses, self.all_labels[:, 0]
+        sample_count = self.data_statistics()
+        max_val = max(sample_count.values())
+        total = sum(sample_count.values())
+        
+        copy_pose_list, copy_label_list = [], []
+        for key, value in sample_count.items():
+            cls_idx = (original_labels == Person.communicative_dict[key])
+            percentage = value / total
+            if percentage > 0.15: # don't inflate if the original data accounts for more than 15%
+                continue
+            num_duplicates = round(self.inflate*max_val / (value+10)) - 1
+            if num_duplicates < 1:
+                continue
+            
+            copied_poses = np.repeat(original_poses[cls_idx.flatten()], num_duplicates, axis=0)
+            copied_labels = np.repeat(original_labels[cls_idx.flatten()], num_duplicates, axis=0)
+            copy_pose_list.append(copied_poses)
+            copy_label_list.append(copied_labels)
+        
+        copy_pose_array = np.concatenate(copy_pose_list, axis=0)
+        copy_label_array = np.concatenate(copy_label_list, axis=0)
+        
+        inflated_pose = np.concatenate((original_poses, copy_pose_array), axis=0)
+        inflated_labels = np.concatenate((original_labels, copy_label_array), axis=0)
+        #print(inflated_labels.reshape(-1, 1).shape)
+        return inflated_pose, inflated_labels.reshape(-1, 1)
 
     def inflate_minority_classes(self):
         
@@ -632,10 +674,13 @@ class TITANSimpleDataset(Dataset):
             stat_dict = {search_key(Person.valid_action_dict, l):c for l, c in zip(label, count)}
             return stat_dict
         else:
-            stat_dict = {}
-            for i in range(self.all_labels.shape[1]):
-                label, count = np.unique(self.all_labels[:, i], return_counts=True)
-                stat_dict[i] = {'labels':label.tolist(), 'counts':count.tolist()}
+            # stat_dict = {}
+            # for i in range(self.all_labels.shape[1]):
+            #     label, count = np.unique(self.all_labels[:, i], return_counts=True)
+            #     stat_dict[i] = {'labels':label.tolist(), 'counts':count.tolist()}
+            # return stat_dict
+            label, count = np.unique(self.all_labels[:, 0], return_counts=True)
+            stat_dict = {search_key(Person.communicative_dict, l):c for l, c in zip(label, count)}
             return stat_dict
         
     def print_statistics(self):
