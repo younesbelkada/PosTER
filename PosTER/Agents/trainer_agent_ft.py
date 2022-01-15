@@ -139,7 +139,8 @@ class Trainer_FT(object):
     #if self.config['wandb']['enable']:prediction_list
     #  self.show_comparison(training_samples_to_plot, validation_samples_to_plot)
 
-    return avg_loss, avg_val_loss/len(val_loader.dataset)
+    #return avg_loss, avg_val_loss/len(val_loader.dataset)
+    return avg_loss, np.mean(f1_scores),avg_val_loss/len(val_loader.dataset)
 
   def train(self, train_loader, val_loader):
     """
@@ -155,10 +156,11 @@ class Trainer_FT(object):
       wandb.watch(self.model, self.criterion, log="all", log_freq=10)
 
     best_loss = float('inf')
+    best_f1_score = 0
     self.model = self.model.to(self.device)
     for epoch in range(self.config['Training']['epochs']):
         #Train epoch and return losses
-        loss, val_loss = self.train_one_epoch(train_loader, val_loader)
+        loss, mean_f1_scores, val_loss = self.train_one_epoch(train_loader, val_loader)
         self.scheduler.step(val_loss)
 
         #Display results
@@ -171,11 +173,12 @@ class Trainer_FT(object):
               "loss": loss, 
               "epoch": epoch,
               "val_loss": val_loss,
+              "mean_f1_score": mean_f1_scores
           })
         
         #Save best model
-        if (self.config['Training']['save_checkpoint'] and val_loss < best_loss):
-            best_loss = val_loss
+        if (self.config['Training']['save_checkpoint'] and mean_f1_scores > best_f1_score):
+            best_f1_score = mean_f1_scores
             save_checkpoint(self.model, filename=self.path_model)
             
   def show_comparison(self, training_samples, validation_samples):
