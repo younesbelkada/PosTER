@@ -63,18 +63,15 @@ def save_checkpoint(model, filename="my_checkpoint.pth.tar"):
     }
     torch.save(checkpoint, filename)
 
-def get_model_for_fine_tuning(config, attributes=None):
+def get_model_for_fine_tuning(config, n_classes=None):
     model_type = config['General']['Model_type']
     if model_type == 'PosTER':
-        heads = PredictionHeads(attributes)
         poster_model = PosTER(config)
         checkpoint_file = config['Model']['PosTER']['filename']
         load_checkpoint(checkpoint_file, poster_model)
-        model = PosTER_FT(poster_model, heads)
+        model = PosTER_FT(poster_model, n_classes)
     elif model_type == 'MonoLoco':
-        assert len(attributes) == 1
-        nb_classes = attributes[0]
-        model = MonoLoco(51, 0.2, nb_classes)
+        model = MonoLoco(51, 0.2, n_classes)
     return model
 
 

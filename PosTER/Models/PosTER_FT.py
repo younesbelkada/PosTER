@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 class PosTER_FT(nn.Module):
-    def __init__(self, pretrained_poster, prediction_heads):
+    def __init__(self, pretrained_poster, n_classes=5):
         """
             PosTER architecture for fine-tuning
             :- pretrained_poster -: PosTER model
@@ -11,14 +11,13 @@ class PosTER_FT(nn.Module):
         super(PosTER_FT, self).__init__()
         self.pretrained_poster = pretrained_poster
         
-        self.fc = nn.Linear(self.pretrained_poster.dim_embed, 5)
-        self.classifier = nn.Linear(self.pretrained_poster.dim_embed*18, 5)
+        #self.classifier = nn.Linear(self.pretrained_poster.dim_embed*18, n_classes)
         self.seq = nn.Sequential(
             nn.Linear(self.pretrained_poster.dim_embed*18, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(0.2),
-            nn.Linear(512, 5),
+            nn.Linear(512, n_classes),
         )
 
     def forward(self, x):
@@ -27,7 +26,7 @@ class PosTER_FT(nn.Module):
     
         embed = self.pretrained_poster.poster_embedding(x)
         output_embed = self.pretrained_poster.transformer_encoder(embed)
-        cls_token = output_embed[:,0,:]
+        #cls_token = output_embed[:,0,:]
         
         out =  torch.flatten(output_embed, start_dim=1)
         #out = self.fc(cls_token)

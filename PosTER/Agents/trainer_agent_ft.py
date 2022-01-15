@@ -30,15 +30,14 @@ class Trainer_FT(object):
     self.num_attribute_cat = 0
     self.use_merge = config['Dataset']['TITAN']['use_merge']
     if config['General']['DatasetType'] == 'TITAN':
-      #attributes = [4, 7, 9, 13, 4]
       if self.use_merge:
-        attributes = [5]
+        n_classes = 5
       else:
-        attributes = [4]
-      self.num_attribute_cat = len(attributes)
+        n_classes = 4
+      self.num_attribute_cat = 1
     else:
       raise "Not implemented"
-    self.model = get_model_for_fine_tuning(config, attributes)
+    self.model = get_model_for_fine_tuning(config, n_classes)
     self.optimizer = get_optimizer(self.model, config)
     self.criterion = get_criterion(config)
     self.scheduler = ReduceLROnPlateau(self.optimizer, 'min')
@@ -68,8 +67,6 @@ class Trainer_FT(object):
       #prediction_list = self.model(keypoints)
       if len(train_plot_samples) < self.config['Training']['n_samples_visualization']:
         train_plot_samples.append([torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :].detach().cpu().numpy(), attributes[0].detach().cpu().numpy()])
-      else:
-        break
       pred = self.model(torch.flatten(keypoints, start_dim=1))
       loss = 0
       targets = attributes.detach().cpu().clone().squeeze(1)
@@ -106,8 +103,6 @@ class Trainer_FT(object):
         keypoints, attributes = keypoints.to(self.device), attributes.to(self.device)
         if len(val_plot_samples) < self.config['Training']['n_samples_visualization']:
           val_plot_samples.append([torch.flatten(keypoints.detach().cpu(), start_dim=1)[0, :].detach().cpu().numpy(), attributes[0].detach().cpu().numpy()])
-        else:
-          break
         # Get a list of predictions corresponding to different attribute categories
         # For each element of the list, we predict an attribute among those that belong in this category
         #prediction_list = self.model(keypoints)
