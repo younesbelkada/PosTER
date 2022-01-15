@@ -38,6 +38,7 @@ class Trainer_FT(object):
     else:
       raise "Not implemented"
     self.model = get_model_for_fine_tuning(config, n_classes)
+    print(self.model.__class__.__name__)
     self.optimizer = get_optimizer(self.model, config)
     self.criterion = get_criterion(config)
     self.scheduler = ReduceLROnPlateau(self.optimizer, 'min')
@@ -54,6 +55,7 @@ class Trainer_FT(object):
     self.model.train()
     loop = tqdm(train_loader)
     avg_loss = 0
+
     log_interval = self.config['Training']['log_interval']
     intermediate_loss = 0
     #correct_preds = [0]*self.num_attribute_cat

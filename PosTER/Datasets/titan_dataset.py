@@ -378,7 +378,7 @@ class TITANSimpleDataset(Dataset):
             self.print_statistics()
         elif self.split=="train" and isinstance(self.inflate, float):
             self.all_poses, self.all_labels = self.inflate_minority_classes_no_merge()
-            print("after inflating the minority classes")
+            print("after inflating the minority classes without merging")
             self.print_statistics()
         elif (self.split == "val" or self.split == "test") and not self.merge_cls:
             self.all_poses, self.all_labels = self.all_poses, self.all_labels[:, 0]
