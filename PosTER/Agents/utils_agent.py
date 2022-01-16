@@ -89,10 +89,12 @@ def get_dataset(config):
     """
     dataset_type = config['General']['DatasetType']
     if dataset_type.lower() == 'static':
-        train_data = StaticDataset(config, 'train')
+        transforms = TransformsAgent(config).get_transforms((1980, 1980))
+        train_data = StaticDataset(config, 'train', transforms)
         train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=True)
 
-        val_data = StaticDataset(config, 'val')
+        transforms_val = TransformsAgent(config, test=True).get_transforms((1980, 1980))
+        val_data = StaticDataset(config, 'val', transforms_val)
         val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate)
     elif dataset_type.lower() == 'dynamic':
         train_data = DynamicDataset(config, 'train')

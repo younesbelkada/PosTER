@@ -248,3 +248,4 @@ class Trainer_FT(object):
           "validation_plot":plot
         }
       )
+    plt.close()

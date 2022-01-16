@@ -51,6 +51,9 @@ class Trainer(object):
           input_batch = input_batch[0].squeeze(-1)
           flipped_input_batch = RandomFlip(p_flip=0.8)(torch.flatten(input_batch, start_dim=1))
           flipped_input_batch = BodyParts()(flipped_input_batch)
+        else:
+          flipped_input_batch = RandomFlip(p_flip=0.8)(torch.flatten(input_batch, start_dim=1))
+          flipped_input_batch = BodyParts()(flipped_input_batch)
         masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch, flipped_input_batch)
         masked_keypoints_for_bt, masked_keypoints, full_keypoints = masked_keypoints_for_bt.to(self.device), masked_keypoints.to(self.device), full_keypoints.to(self.device)
         full_keypoints = torch.flatten(full_keypoints, start_dim=1)
@@ -98,6 +101,9 @@ class Trainer(object):
         if self.config['General']['Task'] == "Pose-modeling":
           if self.config['General']['DatasetType'] == 'TITAN':
             input_batch = input_batch[0].squeeze(-1)
+            flipped_input_batch = RandomFlip(p_flip=0.8)(torch.flatten(input_batch, start_dim=1))
+            flipped_input_batch = BodyParts()(flipped_input_batch)
+          else:
             flipped_input_batch = RandomFlip(p_flip=0.8)(torch.flatten(input_batch, start_dim=1))
             flipped_input_batch = BodyParts()(flipped_input_batch)
           masked_keypoints_for_bt, masked_keypoints, full_keypoints = self.mask_transform(input_batch, flipped_input_batch)

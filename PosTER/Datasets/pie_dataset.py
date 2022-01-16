@@ -19,9 +19,10 @@ from PosTER.Datasets.augmentations import NormalizeKeypoints, BodyParts, RandomT
 def my_collate(batch):
     # TO DO: Filter out empty arrays
     #batch = filter (lambda x:len(x) != 0, batch)
-    #print(batch)
-    batch = torch.cat(batch, dim=0)
-    return batch
+    #for b in batch:
+    #    print(b.shape)
+    batch = torch.cat(batch, dim=-1)
+    return batch.permute(2, 0, 1)
 
 class DynamicDataset(Dataset):
     """
@@ -74,14 +75,13 @@ class DynamicDataset(Dataset):
             if transforms_to_apply:
                 predicted_kps = transforms_to_apply(predicted_kps)
         return predicted_kps
-
 class StaticDataset(Dataset):
     """
         Class definition for the static keypoints dataset.
         Expected inputs: path to pre-computed keypoints
         Expected output: unlabeled human keypoints
     """
-    def __init__(self, config, split):
+    def __init__(self, config, split, transforms=None):
         self.config = config["Dataset"]
         #if split:
         #    self.path_images = get_input_path(self.config["DynamicDataset"]['path_images'], self.config["DynamicDataset"]['ext'], split)
@@ -89,7 +89,7 @@ class StaticDataset(Dataset):
         #    self.path_images = glob(os.path.join(self.config["DynamicDataset"]['path_images'], '**', '*'+self.config["DynamicDataset"]['ext']), recursive=True)
         self.path_kps = get_input_path(self.config["StaticDataset"]['path_input'], self.config["StaticDataset"]['ext'], split, self.config['split'][split])
         self.im_size = (self.config["StaticDataset"]["im_width"], self.config["StaticDataset"]["im_height"])
-        self.transforms_agent = TransformsAgent(config)
+        self.transforms = transforms
 
     def __len__(self):
         """
@@ -110,9 +110,8 @@ class StaticDataset(Dataset):
                 kps_array = json_file[i]['keypoints']
                 predicted_kps.append(convert_keypoints_json_input(kps_array))
             predicted_kps = torch.stack(predicted_kps, dim=0)
-            transforms_to_apply = self.transforms_agent.get_transforms(self.im_size)
-            if transforms_to_apply:
-                predicted_kps = transforms_to_apply(predicted_kps)
+            if self.transforms:
+                predicted_kps = self.transforms(predicted_kps)
         else:
             predicted_kps = torch.tensor([])
-        return predicted_kps
+        return predicted_kps.float()
