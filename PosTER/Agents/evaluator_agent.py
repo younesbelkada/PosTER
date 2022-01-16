@@ -19,13 +19,16 @@ class Evaluator(object):
     """
     def __init__(self, config):
         self.config = config
+        self.use_merge = config['Dataset']['TITAN']['use_merge']
         if config['General']['DatasetType'] == 'TITAN':
-            #attributes = [4, 7, 9, 13, 4]
-            attributes = [5]
-            self.num_attribute_cat = len(attributes)
+            if self.use_merge:
+                n_classes = 5
+            else:
+                n_classes = 4
+            self.num_attribute_cat = 1
         else:
             raise "Not implemented"
-        self.model = get_model_for_fine_tuning(config, attributes)
+        self.model = get_model_for_fine_tuning(config, n_classes)
         checkpoint_file = os.path.join(self.config['General']['Model_path'], self.model.__class__.__name__+'.p')
         load_checkpoint(checkpoint_file, self.model)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -73,6 +76,6 @@ class Evaluator(object):
             conf_matrix = confusion_matrix(list_pr_labels_val[i], list_pr_out_val_argmax[i])
             accuracies = conf_matrix.diagonal()/conf_matrix.sum(axis=1)
         for j in range(len(f1_scores)):
-            converted_label = Person.pred_list_to_str([j])[0]
+            converted_label = Person.pred_list_to_str([j], communicative=not self.use_merge)[0]
             wandb.log({"f1_scores/f1_score_test_{}_{}".format(i, converted_label) : f1_scores[j]})
             wandb.log({"accuracies/accuracy_test_{}_{}".format(i, converted_label) : accuracies[j]})

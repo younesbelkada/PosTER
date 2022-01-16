@@ -10,6 +10,7 @@ class PosTER_FT(nn.Module):
         """
         super(PosTER_FT, self).__init__()
         self.pretrained_poster = pretrained_poster
+        self.pretrained_poster.requires_grad_(False)
         
         #self.classifier = nn.Linear(self.pretrained_poster.dim_embed*18, n_classes)
         self.seq = nn.Sequential(
