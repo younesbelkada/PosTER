@@ -5,7 +5,7 @@ class RegressionHead(nn.Module):
     def __init__(self):
         super(RegressionHead, self).__init__()
         self.fc = nn.Linear(
-            51, 51
+            128*18, 51
         )
         self.tanh = nn.Tanh()
     def forward(self, x):
