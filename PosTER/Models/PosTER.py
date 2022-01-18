@@ -36,7 +36,7 @@ class PosTER(nn.Module):
         output_embed = self.transformer_encoder(embed)
         cls_token = output_embed[:,0,:]
         output_token = self.token_prediction_layer(output_embed[:, 1:, :])
-        x  = self.regressionhead(output_token)
+        x  = self.regressionhead(output_embed)#output_token)
         
         if self.enable_bt:
             return  self.bt_head(cls_token), torch.flatten(x, start_dim=1)
