@@ -89,10 +89,12 @@ def get_dataset(config):
     """
     dataset_type = config['General']['DatasetType']
     if dataset_type.lower() == 'static':
-        train_data = StaticDataset(config, 'train')
+        transforms = TransformsAgent(config).get_transforms((1980, 1980))
+        train_data = StaticDataset(config, 'train', transforms)
         train_dataloader = DataLoader(train_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=True)
 
-        val_data = StaticDataset(config, 'val')
+        transforms_val = TransformsAgent(config, test=True).get_transforms((1980, 1980))
+        val_data = StaticDataset(config, 'val', transforms_val)
         val_dataloader = DataLoader(val_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate)
     elif dataset_type.lower() == 'dynamic':
         train_data = DynamicDataset(config, 'train')
@@ -139,9 +141,10 @@ def get_test_dataset(config):
         test_data = DynamicDataset(config, 'test')
         test_dataloader = DataLoader(test_data, batch_size=config['Training']['batch_size'], collate_fn=my_collate, shuffle=False)
     elif dataset_type.lower() == 'titan':
+        merge_cls = config['Dataset']['TITAN']['use_merge']
         test_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='test', dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
         transforms = TransformsAgent(config, test=True).get_transforms((1980, 1980))
-        test_simple_dataset = TITANSimpleDataset(test_data, merge_cls=True, transforms=transforms)
+        test_simple_dataset = TITANSimpleDataset(test_data, merge_cls=merge_cls, transforms=transforms)
         test_dataloader = DataLoader(test_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate)
     elif dataset_type.lower() == 'tcg':
         datapath, label_type = config['Dataset']['TCG']['dataset_dir'], config['Dataset']['TCG']['label_type']
