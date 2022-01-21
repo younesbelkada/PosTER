@@ -168,6 +168,7 @@ class Trainer_FT(object):
         #Display results
         print(f"Loss epoch {epoch}: ", loss)
         print(f"Validation Loss epoch {epoch}: ", val_loss)
+        print(f"Mean F1 scores epoch {epoch}: ", mean_f1_scores)
 
         #Log results in wandb
         if self.config['wandb']['enable']:

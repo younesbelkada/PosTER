@@ -50,8 +50,6 @@ def get_criterion(config):
         criterion = pose_bt_loss_mae
     elif criterion_type.lower() == 'crossentropy':
         criterion = nn.CrossEntropyLoss()
-        #criterion = F.cross_entropy
-        #criterion = MultiTaskLossWrapper()
     else:
         raise ValueError("Not implemented for the criterion type {}".format(criterion_type))
     return criterion

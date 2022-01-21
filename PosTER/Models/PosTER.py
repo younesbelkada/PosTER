@@ -28,14 +28,14 @@ class PosTER(nn.Module):
         encoder_layers = nn.TransformerEncoderLayer(self.dim_embed, nhead, dim_ff, dropout) 
         self.transformer_encoder = nn.TransformerEncoder(encoder_layers, nlayers) 
         self.token_prediction_layer = nn.Linear(self.dim_embed, dim_tokens)
-        self.regressionhead = RegressionHead()
+        self.regressionhead = RegressionHead(self.dim_embed)
         self.bt_head = self.get_head()
 
     def forward(self, src):
         embed = self.poster_embedding(src)
         output_embed = self.transformer_encoder(embed)
         cls_token = output_embed[:,0,:]
-        output_token = self.token_prediction_layer(output_embed[:, 1:, :])
+        #output_token = self.token_prediction_layer(output_embed[:, 1:, :])
         x  = self.regressionhead(output_embed)#output_token)
         
         if self.enable_bt:

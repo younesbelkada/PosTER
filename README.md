@@ -1,23 +1,25 @@
 # PosTER
-Implementation of PosTER - Pose Transformer Encoder Representation - for pedestrian attributes recognition 
 
-## First steps
+Implementation of PosTER - Pose Transformer Encoder Representation - for pedestrian attributes recognition. Object Recognition and Computer Vision course. ENS Paris Saclay 2021-2022
 
-+ Decide on which pedestrian attribute to work on (chose 2-3) [JAAD Dataset](https://github.com/ykotseruba/JAAD) and [TITAN Dataset](https://usa.honda-ri.com/titan)
-+ Reproduce some results with SOTA methods for these attributes
-+ Train PosTER on unlabeled human poses (start with poses from PIE [here](https://drive.google.com/file/d/195g6eDeAaLRt7nEN5EweB7-eWwbktkQ_/view))
-+ Fine-tune PosTER on these attributes
+![](images/architecture.png)
 
+> We introduce in a transformer architecture pretrained in a self-supervised setting to generate meaningful and interpretable embeddings for poses. Those embeddings can then be used to make attribute prediction with a simple decoder reaching comparable results with models trained from scratch on some attributes.
 
-- Demander resultats sur merge_cls
-- solution pour les autres classes?
-- force complete pose?
-- Is Focal Loss really useful?
-- TCG dataset input format
+## Requirements
 
-## TO DO
+This repository requires mainly ```pytorch``` and ```wandb``` for visualization. We strongly recommend you to create an account on [wandb](https://wandb.ai/) for better visualization. For installing the libraries, run:
 
-- [ ] Relative coordinates and inflate => + data augmentation (flip and random translation / random scaling)
-- [x] Import MonoLoco
-- [x] Data augmentation
-- [x] F1 score per class
+```
+pip3 install -r requirements.txt
+```
+
+## Tokenizing Poses
+
+![](images/tokenization.drawio.png)
+
+We tokenize poses by individual body part. Therefore, a single pose containing 17 keypoints can be seen as a sequence of 17 token of dimension 3 in order to be fed to a Transformers based architecture.
+
+## Augmenting Poses
+
+We introduce in ```Poster/Datasets/augmentations.py``` augmentations that can be applied to 2d Human poses, such as flipping, random translation and normalization.

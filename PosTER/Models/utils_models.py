@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 
 class RegressionHead(nn.Module):
-    def __init__(self):
+    def __init__(self, dim_embed):
         super(RegressionHead, self).__init__()
+        self.dim_embed = dim_embed
         self.fc = nn.Linear(
-            128*18, 51
+            dim_embed*18, 51
         )
         self.tanh = nn.Tanh()
     def forward(self, x):
