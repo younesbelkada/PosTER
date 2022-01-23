@@ -17,7 +17,6 @@ class PosTER_FT(nn.Module):
             nn.Linear(self.pretrained_poster.dim_embed*18, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
-            nn.Dropout(0.2),
             nn.Linear(512, n_classes),
         )
 
