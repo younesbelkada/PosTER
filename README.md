@@ -14,6 +14,16 @@ This repository requires mainly ```pytorch``` and ```wandb``` for visualization.
 pip3 install -r requirements.txt
 ```
 
+## Get predictions
+
+### Model zoo
+
++ PosTER pre-trained on TITAN and fine-tuned on TITAN attributes: [here](https://drive.google.com/file/d/1-BhkcTJ7wXNwh1HX5bUGPeZVlWyJ626P/view?fbclid=IwAR2fLV4xLEHYfj0ia2gnJBUE84QFv1e50S3RM9o5iscnLqM4JLjixSuOaB0)
++ Other models coming soon..!
+
+Once the model downloaded, put your input images (```png```or ```jpg```) into the ```input/``` directory and the pre-trained model that has to be renamed ```PosTER_FT.p``` into ```Models```. Then, run ```python3 predict.py```. The output image should be save at ```output/```
+
+
 ## Tokenizing Poses
 
 ![](images/tokenization.drawio.png)
