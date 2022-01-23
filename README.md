@@ -23,3 +23,21 @@ We tokenize poses by individual body part. Therefore, a single pose containing 1
 ## Augmenting Poses
 
 We introduce in ```Poster/Datasets/augmentations.py``` augmentations that can be applied to 2d Human poses, such as flipping, random translation and normalization.
+
+## Pose modeling 
+
+### Pose modeling on PIE dataset
+
+We extracted poses using OpenPifPaf on PIE dataset. The 2D poses files can be found on this [link](https://drive.google.com/file/d/195g6eDeAaLRt7nEN5EweB7-eWwbktkQ_/view?usp=sharing). You should download it and extract it.
+
+### Running pose-modeling script
+
+>**You have one config file to change and manipulate**.
+
+Please carefully refer to our [training wiki](https://github.com/younesbelkada/PosTER/wiki/Training-wiki) in order to understand each argument of the config file ```config.json```. 
+
+After modifying the config file, run ```python test.py```.
+
+#### Wandb visualization (Recommended)
+
+We highly recommend you to use wandb for visualzing intermediate results while training your model. You can easily create an account on [wandb](wandb.ai) and push the results using your credentials. Read our [training wiki](https://github.com/younesbelkada/PosTER/wiki/Training-wiki) to understand more.
