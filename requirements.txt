@@ -2,4 +2,4 @@ openpifpaf==0.13.0
 wandb
 einops
 opencv-python
-opencv-python-headless==4.1.2.30
+opencv-python-headless>=4.1.2.30
