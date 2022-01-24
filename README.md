@@ -63,7 +63,7 @@ After modifying the config file, run ```python test.py```.
 
 #### Wandb visualization (Recommended)
 
-We highly recommend you to use wandb for visualzing intermediate results while training your model. You can easily create an account on [wandb](wandb.ai) and push the results using your credentials. Read our [training wiki](https://github.com/younesbelkada/PosTER/wiki/Training-wiki) to understand more.
+We highly recommend you to use wandb for visualzing intermediate results while training your model. You can easily create an account on [wandb](https://wandb.ai/younesbelkada/PosTER) and push the results using your credentials. Read our [training wiki](https://github.com/younesbelkada/PosTER/wiki/Training-wiki) to understand more.
 
 ## Fine-tuning on pedestrian attributes
 
