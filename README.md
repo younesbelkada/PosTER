@@ -6,6 +6,19 @@ Implementation of PosTER - Pose Transformer Encoder Representation - for pedestr
 
 > We introduce in a transformer architecture pretrained in a self-supervised setting to generate meaningful and interpretable embeddings for poses. Those embeddings can then be used to make attribute prediction with a simple decoder reaching comparable results with models trained from scratch on some attributes.
 
+- [PosTER](#poster)
+  * [Requirements](#requirements)
+  * [Get predictions](#get-predictions)
+    + [Model zoo](#model-zoo)
+  * [Tokenizing Poses](#tokenizing-poses)
+  * [Augmenting Poses](#augmenting-poses)
+  * [Pose modeling](#pose-modeling)
+    + [Pose modeling on PIE dataset](#pose-modeling-on-pie-dataset)
+    + [Running pose-modeling script](#running-pose-modeling-script)
+      - [Wandb visualization (Recommended)](#wandb-visualization--recommended-)
+  * [Fine-tuning on pedestrian attributes](#fine-tuning-on-pedestrian-attributes)
+
+
 ## Requirements
 
 This repository requires mainly ```pytorch``` and ```wandb``` for visualization. We strongly recommend you to create an account on [wandb](https://wandb.ai/) for better visualization. For installing the libraries, run:
