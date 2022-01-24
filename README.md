@@ -51,3 +51,18 @@ After modifying the config file, run ```python test.py```.
 #### Wandb visualization (Recommended)
 
 We highly recommend you to use wandb for visualzing intermediate results while training your model. You can easily create an account on [wandb](wandb.ai) and push the results using your credentials. Read our [training wiki](https://github.com/younesbelkada/PosTER/wiki/Training-wiki) to understand more.
+
+## Fine-tuning on pedestrian attributes
+
+This is possible on TITAN dataset only, in order to get the association between each pose on TITAN and its label, we have to run an off-the-shelf pose detector on TITAN, and match the predicted bounding boxes with the ground truth bounding boxes on TITAN dataset. An already processed dataset (*i.e,* a pickle file containing the poses with the labels) is available upon request. To measure the impact of our learned embeddings, we freeze all the layers of PosTER and predict the attributes using a small Fully Connected block on top of these embeddings.
+
+Some quantitative comparison results on TITAN test set (merged classes) between MonoLoco (trained from scratch) and our method (with a pose-modeling pretraining on TITAN training set):
+
+| Attribute Name  | F1-MonoLoco | F1-Ours |
+| ------------- | ------------- | ------------- |
+| Walking | 89.2 | **89.6** |
+| Standing | **60.1** | **58.3** |
+| Sitting | 62.8 | **67.4** |
+| Bending | 55.7 | **57.8** |
+| Biking | 79.8 | 80.0 |
+| Mean-F1 | 69.5 | **70.6** |
