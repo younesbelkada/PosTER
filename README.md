@@ -66,3 +66,5 @@ Some quantitative comparison results on TITAN test set (merged classes) between 
 | Bending | 55.7 | **57.8** |
 | Biking | 79.8 | 80.0 |
 | Mean-F1 | 69.5 | **70.6** |
+
+You can also fine-tune on communicative attributes using our script (refer to our training wiki).
