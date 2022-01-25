@@ -59,7 +59,7 @@ We extracted poses using OpenPifPaf on PIE dataset. The 2D poses files can be fo
 
 Please carefully refer to our [training wiki](https://github.com/younesbelkada/PosTER/wiki/Training-wiki) in order to understand each argument of the config file ```config.json```. 
 
-After modifying the config file, run ```python test.py```.
+After modifying the config file, run ```python train.py```.
 
 #### Wandb visualization (Recommended)
 
@@ -81,6 +81,8 @@ Some quantitative comparison results on TITAN test set (merged classes) between 
 | Mean-F1 | 69.5 | **70.6** |
 
 You can also fine-tune on communicative attributes using our script (refer to our training wiki).
+
+After modifying the config file, run ```python train.py```.
 
 ### Evaluating the fine-tuned model
 
