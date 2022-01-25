@@ -81,3 +81,7 @@ Some quantitative comparison results on TITAN test set (merged classes) between 
 | Mean-F1 | 69.5 | **70.6** |
 
 You can also fine-tune on communicative attributes using our script (refer to our training wiki).
+
+### Evaluating the fine-tuned model
+
+Available only on TITAN dataset. Please refer to our [evaluation wiki](https://github.com/younesbelkada/PosTER/wiki/Evaluation-wiki) to understand how to evaluate your fine-tuned model.
