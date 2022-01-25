@@ -72,6 +72,18 @@ def get_model_for_fine_tuning(config, n_classes=None):
         model = MonoLoco(51, 0.2, n_classes)
     return model
 
+def get_model_for_testing(config, n_classes=None):
+    model_type = config['Evaluation']['Model_type']
+    checkpoint_file = config['Evaluation']['Model_path']
+    if model_type == 'PosTER':
+        poster_model = PosTER(config)
+        model = PosTER_FT(poster_model, n_classes)
+        load_checkpoint(checkpoint_file, model)
+    elif model_type == 'MonoLoco':
+        model = MonoLoco(51, 0.2, n_classes)
+        load_checkpoint(checkpoint_file, model)
+    model.eval()
+    return model
 
 def load_checkpoint(checkpoint_file, model):
     print("=> Loading checkpoint")
@@ -141,7 +153,7 @@ def get_test_dataset(config):
     elif dataset_type.lower() == 'titan':
         merge_cls = config['Dataset']['TITAN']['use_merge']
         test_data = TITANDataset(pickle_dir=config['Dataset']['TITAN']['pickle_dir'], split='test', dataset_dir=config['Dataset']['TITAN']['dataset_dir'])
-        transforms = TransformsAgent(config, test=True).get_transforms((1980, 1980))
+        transforms = TransformsAgent(config, test=True).get_transforms((1920, 1080))
         test_simple_dataset = TITANSimpleDataset(test_data, merge_cls=merge_cls, transforms=transforms)
         test_dataloader = DataLoader(test_simple_dataset, batch_size=config['Training']['batch_size'], shuffle=False, collate_fn=TITANSimpleDataset.collate)
     elif dataset_type.lower() == 'tcg':

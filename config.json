@@ -1,7 +1,7 @@
 {
     "General":{
         "Task":"Pose-modeling",
-        "DatasetType":"Static",
+        "DatasetType":"TITAN",
         "Model_type":"PosTER",
         "Model_path":"Models"
     },
@@ -19,7 +19,7 @@
         "TITAN":{
             "dataset_dir":".",
             "pickle_dir":"pkl_files",
-            "use_merge":false
+            "use_merge":true
         },
         "Transforms":{
             "normalize":true,
@@ -47,8 +47,8 @@
         "PosTER":{
             "dim_tokens":3,
             "dim_embed":128,  
-            "dim_ff":128,
-            "nlayers":2,  
+            "dim_ff":1024,
+            "nlayers":4,  
             "nhead":4,  
             "dropout":0.2,
             "filename":"Models/posTER_pretrained.p"
@@ -73,5 +73,9 @@
         "save_checkpoint":true,
         "n_samples_visualization":5,
         "log_interval":10
+    },
+    "Evaluation":{
+        "Model_type":"PosTER",
+        "Model_path":"./Models/PosTER_FT.p"
     }
 }

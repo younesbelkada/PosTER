@@ -10,7 +10,7 @@ mpl.use('TkAgg')
 from tqdm import tqdm
 from sklearn.metrics import f1_score, confusion_matrix
 
-from PosTER.Agents.utils_agent import get_model_for_fine_tuning, load_checkpoint
+from PosTER.Agents.utils_agent import get_model_for_fine_tuning, load_checkpoint, get_model_for_testing
 from PosTER.Datasets.titan_dataset import Person
 
 class Evaluator(object):
@@ -28,9 +28,7 @@ class Evaluator(object):
             self.num_attribute_cat = 1
         else:
             raise "Not implemented"
-        self.model = get_model_for_fine_tuning(config, n_classes)
-        checkpoint_file = os.path.join(self.config['General']['Model_path'], self.model.__class__.__name__+'.p')
-        load_checkpoint(checkpoint_file, self.model)
+        self.model = get_model_for_testing(config, n_classes)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.model.to(self.device)
     
