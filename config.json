@@ -23,7 +23,7 @@
         },
         "Transforms":{
             "normalize":true,
-            "body_parts":true,
+            "body_parts":false,
             "translation":{
                 "enable":true,
                 "p":0.5,
@@ -49,7 +49,7 @@
             "dim_embed":128,  
             "dim_ff":1024,
             "nlayers":4,  
-            "nhead":4,  
+            "nhead":8,  
             "dropout":0.2,
             "filename":"Models/posTER_pretrained.p"
         }
@@ -68,7 +68,7 @@
             "lmbda":5e-3,
             "beta" : 0.1
         },
-        "batch_size":64,
+        "batch_size":128,
         "epochs":15,
         "save_checkpoint":true,
         "n_samples_visualization":5,
